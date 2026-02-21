@@ -18,27 +18,27 @@ export default function HomePage() {
       <RevealOnScroll />
       <Header />
 
-      <section id="hero" className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
-        <div className="absolute inset-0" style={{ background: 'var(--heroGradient)' }} />
-        <div className="absolute inset-0" style={{ background: 'var(--softFade)' }} />
-        <Container className="relative">
-          <div className="max-w-4xl reveal">
-            <p className="mb-5 text-xs uppercase tracking-[0.24em] text-[color:var(--accent)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
-            <h1 className="text-4xl tracking-tight leading-[1.08] md:text-6xl">Квартира в ипотеку под 2%</h1>
-            <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[color:var(--muted)]">Помогаю выбрать ЖК и оформить ипотеку — бесплатно для вас</p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Button as="a" href="#lead-form">Подобрать варианты</Button>
-              <Button as="a" href={brand.telegramUrl} target="_blank" rel="noreferrer" variant="ghost">Написать в Telegram</Button>
+      <section id="hero-lead-wrapper" className="relative overflow-hidden" style={{ backgroundImage: 'url(https://via.placeholder.com/1920x1080)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+        <section id="hero" className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
+          <Container className="relative">
+            <div className="max-w-4xl reveal">
+              <p className="mb-5 text-xs uppercase tracking-[0.24em] text-[color:var(--accent)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
+              <h1 className="text-4xl tracking-tight leading-[1.08] md:text-6xl">Квартира в ипотеку под 2%</h1>
+              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[color:var(--muted)]">Помогаю выбрать ЖК и оформить ипотеку — бесплатно для вас</p>
+              <div className="mt-9 flex flex-wrap gap-3">
+                <Button as="a" href="#lead-form">Подобрать варианты</Button>
+                <Button as="a" href={brand.telegramUrl} target="_blank" rel="noreferrer" variant="ghost">Написать в Telegram</Button>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[color:var(--muted)]">
+                <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
+                <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+              </div>
             </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[color:var(--muted)]">
-              <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
-              <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
-            </div>
-          </div>
-        </Container>
-      </section>
+          </Container>
+        </section>
 
-      <LeadFormSection />
+        <LeadFormSection />
+      </section>
 
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
