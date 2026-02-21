@@ -39,9 +39,10 @@ export default function HomePage() {
           <div className="reveal max-w-4xl bg-transparent p-4 shadow-none backdrop-blur-0 sm:p-5 md:p-7">
             <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
             <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] [text-shadow:0_1px_0_rgba(255,255,255,0.35)] md:text-6xl">Квартира в ипотеку под 2%</h1>
-            <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогаю выбрать ЖК и оформить ипотеку — бесплатно для вас</p>
+            <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
+            <p className="mt-3 text-sm text-[rgba(17,24,39,0.70)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button as="a" href="#lead-form">Подобрать варианты</Button>
+              <Button as="a" href="#lead-form">Получить консультацию</Button>
               <Button
                 as="a"
                 href={brand.telegramUrl}
@@ -128,6 +129,10 @@ export default function HomePage() {
       <section id="faq" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
           <SectionHeader eyebrow="FAQ" title="Частые вопросы" />
+          <div className="mb-6 rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.68)] p-5">
+            <h3 className="text-xl tracking-tight">Почему для вас бесплатно?</h3>
+            <p className="mt-2 text-[color:var(--muted)]">Я сотрудничаю с застройщиками по Луганску. Когда вы выходите на сделку, застройщик оплачивает мою работу как партнёру. Для вас цена квартиры не меняется — вы получаете консультацию и сопровождение бесплатно.</p>
+          </div>
           <div className="space-y-4">
             {faq.map((item) => (
               <Card key={item.q} className="reveal">
@@ -141,7 +146,7 @@ export default function HomePage() {
 
       <section id="contacts" className="py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="Контакты" title="Оставьте заявку или напишите в Telegram" subtitle="Свяжусь с вами, уточню детали и отправлю подборку по вашим параметрам." />
+          <SectionHeader eyebrow="Контакты" title="Оставьте заявку или напишите в Telegram" subtitle="Свяжусь с вами, уточню детали и покажу варианты, которые реально подходят." />
           <Card className="reveal">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div>

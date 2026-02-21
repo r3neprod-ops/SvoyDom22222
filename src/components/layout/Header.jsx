@@ -47,12 +47,12 @@ export default function Header() {
                 className="block h-8 w-8 object-contain"
               />
             </a>
-            <Button as="a" href="#lead-form" variant="primary" className="!px-5">Подобрать варианты</Button>
+            <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <Button as="a" href="#lead-form" variant="primary" className="!px-4 !py-2 text-xs">Подобрать варианты</Button>
+            <Button as="a" href="#lead-form" variant="primary" className="!px-4 !py-2 text-xs">Получить консультацию</Button>
             <button
               type="button"
               aria-label="Открыть меню"

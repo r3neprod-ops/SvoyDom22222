@@ -190,7 +190,7 @@ export default function LeadFormSection() {
     if (step === 1) {
       return (
         <div className="space-y-3">
-          <p className="text-sm font-medium">Что вы хотите подобрать?</p>
+          <p className="text-sm font-medium">Что вы хотите выбрать?</p>
           <InlineChoice
             options={propertyOptions.map((item) => item.label)}
             value={propertyOptions.find((item) => item.value === leadAnswers.propertyType)?.label || ''}
@@ -222,7 +222,7 @@ export default function LeadFormSection() {
     if (step === 3) {
       return (
         <div className="space-y-3">
-          <p className="text-sm font-medium">Насколько срочно нужен подбор?</p>
+          <p className="text-sm font-medium">Насколько срочно нужна консультация?</p>
           <InlineChoice
             options={timelineOptions.map((item) => item.label)}
             value={timelineOptions.find((item) => item.value === leadAnswers.timeline)?.label || ''}
@@ -300,7 +300,7 @@ export default function LeadFormSection() {
 
     return (
       <div className="grid gap-3">
-        <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — пришлю подборку</p>
+        <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — помогу выбрать лучший вариант</p>
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={leadAnswers.name} onChange={(e) => setValue('name', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={leadAnswers.phone} onChange={(e) => setValue('phone', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={leadAnswers.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
@@ -314,8 +314,8 @@ export default function LeadFormSection() {
         <Container>
           <Card className="reveal rounded-[22px] border-[rgba(17,24,39,0.10)] bg-[rgba(255,255,255,0.62)] p-7 shadow-[0_18px_50px_rgba(17,24,39,0.10)] [backdrop-filter:blur(14px)_saturate(120%)] transition-colors duration-200 hover:border-[rgba(17,24,39,0.14)] hover:shadow-[0_22px_58px_rgba(17,24,39,0.12)] md:p-10">
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Короткая заявка</p>
-            <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Подобрать варианты</h2>
-            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Ответьте на вопросы шаг за шагом.</p>
+            <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Получить консультацию</h2>
+            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Расскажу, какие варианты реально подходят, и сопровожу покупку до сделки.</p>
 
             <div className="mb-6 mt-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
               <div className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all" style={{ width: `${embeddedProgress}%` }} />
@@ -324,7 +324,8 @@ export default function LeadFormSection() {
             {embeddedDone ? (
               <div className="space-y-5">
                 <h3 className="text-2xl tracking-tight">Готово</h3>
-                <p className="text-[color:var(--muted)]">Спасибо! Я свяжусь с вами и пришлю подборку.</p>
+                <p className="text-[color:var(--muted)]">Спасибо! Свяжусь с вами, уточню детали и помогу выбрать подходящий вариант.</p>
+                <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button type="button" onClick={resetEmbedded}>Начать заново</Button>
               </div>
             ) : (
@@ -347,7 +348,7 @@ export default function LeadFormSection() {
           <div className="w-full max-w-2xl rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[var(--shadowHover)] md:p-8">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Получить подборку</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Получить консультацию</p>
                 <h3 className="text-2xl tracking-tight">{done ? 'Спасибо!' : stepTitles[modalStep - 1]}</h3>
               </div>
               <button type="button" className="focus-ring rounded-lg px-2 py-1 text-sm" onClick={closeModal}>Закрыть</button>
@@ -359,7 +360,8 @@ export default function LeadFormSection() {
 
             {done ? (
               <div className="space-y-5">
-                <p className="text-[color:var(--muted)]">Спасибо! Я свяжусь с вами и пришлю варианты.</p>
+                <p className="text-[color:var(--muted)]">Спасибо! Свяжусь с вами, уточню детали и помогу выбрать подходящий вариант.</p>
+                <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button onClick={closeModal}>Закрыть</Button>
               </div>
             ) : (
@@ -373,7 +375,7 @@ export default function LeadFormSection() {
                   {modalStep < stepTitles.length ? (
                     <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>Далее</Button>
                   ) : (
-                    <Button type="submit" disabled={!leadAnswers.name.trim() || !leadAnswers.phone.trim()}>Получить подборку</Button>
+                    <Button type="submit" disabled={!leadAnswers.name.trim() || !leadAnswers.phone.trim()}>Получить консультацию</Button>
                   )}
                 </div>
               </form>
