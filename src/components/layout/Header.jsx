@@ -35,7 +35,7 @@ export default function Header() {
 
           <div className="hidden items-center gap-2 md:flex">
             <a href={brand.telegramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/60 backdrop-blur border border-black/10 transition-all duration-200 hover:bg-white/80 hover:shadow-sm focus-ring" aria-label="Telegram">
-              <img src="/icons/telegram.png" alt="Telegram" className="h-5 w-5 block object-contain" />
+              <img src="/icons/telegram.png?v=1" alt="Telegram" className="h-5 w-5 block object-contain" />
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Подобрать варианты</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
