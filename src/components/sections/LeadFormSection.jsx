@@ -80,7 +80,7 @@ export default function LeadFormSection() {
 
   return (
     <>
-      <section id="lead-form" className="py-12 md:py-16">
+      <section id="lead-form" className="flex flex-col items-start justify-start bg-transparent py-12 md:py-16">
         <Container>
           <Card className="reveal p-7 md:p-10">
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Короткая заявка</p>
