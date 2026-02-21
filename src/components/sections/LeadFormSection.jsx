@@ -123,10 +123,10 @@ export default function LeadFormSection() {
     <>
       <section id="lead-form" className="py-12 md:py-16">
         <Container>
-          <Card className="reveal p-7 md:p-10">
-            <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Короткая заявка</p>
-            <h2 className="text-3xl tracking-tight leading-[1.1] md:text-4xl">Подобрать варианты</h2>
-            <p className="mt-3 max-w-2xl text-[color:var(--muted)]">Ответьте на 2 коротких вопроса, а остальное заполним в удобном окне.</p>
+          <Card className="reveal rounded-[22px] border-[rgba(17,24,39,0.10)] bg-[rgba(255,255,255,0.62)] p-7 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_rgba(17,24,39,0.10)] backdrop-blur-[14px] [backdrop-filter:blur(14px)_saturate(120%)] transition-colors duration-200 hover:border-[rgba(17,24,39,0.14)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_22px_58px_rgba(17,24,39,0.12)] md:p-10">
+            <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Короткая заявка</p>
+            <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Подобрать варианты</h2>
+            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Ответьте на 2 коротких вопроса, а остальное заполним в удобном окне.</p>
 
             <div className="mt-8 grid gap-6 md:grid-cols-2">
               <InlineChoice title={stepTitles[0]} options={zoneOptions} value={form.zone} onSelect={(value) => setValue('zone', value)} />
