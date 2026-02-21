@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
 import SectionHeader from '@/components/ui/SectionHeader';
+import ComplexCarouselCard from '@/components/complexes/ComplexCarouselCard';
 import brand from '@/data/brand';
 import complexes from '@/data/complexes';
 import faq from '@/data/faq';
@@ -83,14 +84,10 @@ export default function HomePage() {
 
       <section id="complexes" className="py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="ЖК" title="Подборка актуальных комплексов" subtitle="Подберу подходящие варианты под ваши цели, бюджет и желаемый район." />
-          <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          <SectionHeader eyebrow="ЖК" title="Жилые комплексы" subtitle="Сравните ключевые варианты и выберите формат, который подходит под ваш сценарий покупки." />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
             {complexes.map((item) => (
-              <Card key={item.title} className="reveal">
-                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent2)]">Жилой комплекс</p>
-                <h3 className="mt-3 text-2xl tracking-tight leading-[1.12]">{item.title}</h3>
-                <p className="mt-3 text-[color:var(--muted)]">{item.description}</p>
-              </Card>
+              <ComplexCarouselCard key={item.id} complex={item} />
             ))}
           </div>
         </Container>
