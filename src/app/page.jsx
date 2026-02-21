@@ -36,7 +36,7 @@ export default function HomePage() {
           }}
         />
         <Container className="relative">
-          <div className="reveal max-w-4xl rounded-[22px] border border-[rgba(17,24,39,0.10)] bg-[rgba(255,255,255,0.62)] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_18px_50px_rgba(17,24,39,0.10)] backdrop-blur-[14px] [backdrop-filter:blur(14px)_saturate(120%)] transition-colors duration-200 hover:border-[rgba(17,24,39,0.14)] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.55),0_22px_58px_rgba(17,24,39,0.12)] sm:p-5 md:p-7">
+          <div className="reveal max-w-4xl bg-transparent p-4 shadow-none backdrop-blur-0 sm:p-5 md:p-7">
             <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
             <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] [text-shadow:0_1px_0_rgba(255,255,255,0.35)] md:text-6xl">Квартира в ипотеку под 2%</h1>
             <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогаю выбрать ЖК и оформить ипотеку — бесплатно для вас</p>

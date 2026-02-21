@@ -18,7 +18,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border)] bg-white/70 backdrop-blur-xl">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-[color:var(--border)] bg-white/60 backdrop-blur-xl">
       <Container>
         <div className="flex h-16 items-center justify-between md:h-[72px]">
           <a href="#hero" className="focus-ring rounded-lg text-sm font-semibold tracking-wide md:text-base">
