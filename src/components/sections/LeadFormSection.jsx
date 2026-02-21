@@ -312,7 +312,7 @@ export default function LeadFormSection() {
     <>
       <section id="lead-form" className="py-12 md:py-16">
         <Container>
-          <Card className="reveal rounded-[22px] border-[rgba(17,24,39,0.10)] bg-[rgba(255,255,255,0.62)] p-7 shadow-[0_18px_50px_rgba(17,24,39,0.10)] [backdrop-filter:blur(14px)_saturate(120%)] transition-colors duration-200 hover:border-[rgba(17,24,39,0.14)] hover:shadow-[0_22px_58px_rgba(17,24,39,0.12)] md:p-10">
+          <Card className="embedded-lead-card reveal p-7 transition-colors duration-200 md:p-10">
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Короткая заявка</p>
             <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Получить консультацию</h2>
             <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Расскажу, какие варианты реально подходят, и сопровожу покупку до сделки.</p>
