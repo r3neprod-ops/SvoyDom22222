@@ -57,14 +57,14 @@ body {
   }
 
   .button-primary {
-    background: var(--accent);
+    background: var(--accent2);
     color: #fff;
-    box-shadow: 0 10px 30px rgba(176, 141, 87, 0.28);
+    box-shadow: 0 14px 36px rgba(123, 165, 154, 0.3);
   }
 
   .button-primary:hover {
-    background: #9e7f4f;
-    transform: translateY(-1px);
+    background: #6e958b;
+    transform: translateY(-2px);
   }
 
   .button-secondary {
@@ -85,7 +85,7 @@ body {
   }
 
   .button-ghost:hover {
-    background: rgba(176, 141, 87, 0.10);
+    background: rgba(123, 165, 154, 0.12);
   }
 
   .card {
