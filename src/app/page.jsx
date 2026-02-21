@@ -18,7 +18,7 @@ export default function HomePage() {
       <RevealOnScroll />
       <Header />
 
-      <section id="hero-lead-wrapper" className="relative overflow-hidden" style={{ backgroundImage: 'url(https://via.placeholder.com/1920x1080)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+      <section id="hero-lead-wrapper" className="relative overflow-hidden" style={{ backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F6e6b28460afc4aa4a8fb711213fa8d32)', backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
         <section id="hero" className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
           <Container className="relative">
             <div className="max-w-4xl reveal">
