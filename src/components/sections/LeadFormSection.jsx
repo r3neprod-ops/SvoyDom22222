@@ -16,7 +16,14 @@ const stepTitles = [
   'Какой вариант вы рассматриваете?',
   'Давайте определимся по бюджету',
   'Поговорим об отделке внутри',
+  'Первоначальный взнос',
   'Оставьте контакты — пришлю подборку',
+];
+
+const downPaymentOptions = [
+  { label: 'Маткапитал', value: 'matcap' },
+  { label: 'Маткапитал + собственные средства', value: 'matcap_plus_own' },
+  { label: 'Собственные средства', value: 'own' },
 ];
 
 const initialState = {
@@ -25,6 +32,8 @@ const initialState = {
   budget: '',
   customBudget: '',
   finish: '',
+  downPaymentType: '',
+  downPaymentOwnAmount: '',
   name: '',
   phone: '',
   telegram: '',
@@ -35,6 +44,7 @@ export default function LeadFormSection() {
   const [open, setOpen] = useState(false);
   const [modalStep, setModalStep] = useState(1);
   const [done, setDone] = useState(false);
+  const [amountError, setAmountError] = useState('');
 
   useEffect(() => {
     const flag = sessionStorage.getItem('leadModalClosed');
@@ -45,7 +55,8 @@ export default function LeadFormSection() {
 
   const progress = useMemo(() => {
     if (done) return 100;
-    return Math.round(((modalStep + 1) / 5) * 100);
+    const percent = Math.round((modalStep / stepTitles.length) * 100);
+    return Math.min(100, Math.max(0, percent));
   }, [done, modalStep]);
 
   const closeModal = () => {
@@ -55,13 +66,39 @@ export default function LeadFormSection() {
 
   const setValue = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
+  const setDownPaymentType = (value) => {
+    setForm((prev) => ({
+      ...prev,
+      downPaymentType: value,
+      downPaymentOwnAmount: value === 'matcap' ? '' : prev.downPaymentOwnAmount,
+    }));
+    setAmountError('');
+  };
+
   const continueFromInline = () => {
     setModalStep(3);
     setOpen(true);
   };
 
-  const next = () => setModalStep((prev) => Math.min(prev + 1, 5));
-  const prev = () => setModalStep((prev) => Math.max(prev - 1, 1));
+  const isOwnAmountValid = () => {
+    if (!form.downPaymentOwnAmount) return true;
+    const amount = Number(form.downPaymentOwnAmount);
+    return Number.isFinite(amount) && amount > 0;
+  };
+
+  const next = () => {
+    if (modalStep === 5 && !isOwnAmountValid()) {
+      setAmountError('Введите сумму больше 0 или оставьте поле пустым.');
+      return;
+    }
+    setAmountError('');
+    setModalStep((prev) => Math.min(prev + 1, stepTitles.length));
+  };
+
+  const prev = () => {
+    setAmountError('');
+    setModalStep((prev) => Math.max(prev - 1, 1));
+  };
 
   const submit = (event) => {
     event.preventDefault();
@@ -70,6 +107,8 @@ export default function LeadFormSection() {
       layout: form.layout,
       budget: form.budget === 'Свой вариант' ? form.customBudget : form.budget,
       finish: form.finish,
+      downPaymentType: form.downPaymentType || null,
+      downPaymentOwnAmount: form.downPaymentOwnAmount ? Number(form.downPaymentOwnAmount) : null,
       name: form.name,
       phone: form.phone,
       telegram: form.telegram,
@@ -78,9 +117,11 @@ export default function LeadFormSection() {
     setDone(true);
   };
 
+  const showOwnAmount = form.downPaymentType === 'matcap_plus_own' || form.downPaymentType === 'own';
+
   return (
     <>
-      <section id="lead-form" className="flex flex-col items-start justify-start bg-transparent py-12 md:py-16">
+      <section id="lead-form" className="py-12 md:py-16">
         <Container>
           <Card className="reveal p-7 md:p-10">
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Короткая заявка</p>
@@ -110,8 +151,11 @@ export default function LeadFormSection() {
               <button type="button" className="focus-ring rounded-lg px-2 py-1 text-sm" onClick={closeModal}>Закрыть</button>
             </div>
 
-            <div className="mb-6 h-2 w-full rounded-full bg-[color:var(--bg2)]">
-              <div className="h-full rounded-full bg-[color:var(--accent2)] transition-all" style={{ width: `${progress}%` }} />
+            <div className="mb-6 w-full h-2 rounded-full bg-[color:var(--bg2)] overflow-hidden">
+              <div
+                className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all"
+                style={{ width: `${progress}%` }}
+              />
             </div>
 
             {done ? (
@@ -138,6 +182,39 @@ export default function LeadFormSection() {
                 )}
                 {step === 4 && <InlineChoice options={finishOptions} value={form.finish} onSelect={(value) => setValue('finish', value)} />}
                 {step === 5 && (
+                  <div className="space-y-4">
+                    <InlineChoice
+                      options={downPaymentOptions.map((item) => item.label)}
+                      value={downPaymentOptions.find((item) => item.value === form.downPaymentType)?.label || ''}
+                      onSelect={(label) => {
+                        const option = downPaymentOptions.find((item) => item.label === label);
+                        if (option) setDownPaymentType(option.value);
+                      }}
+                    />
+                    <p className="text-sm text-[color:var(--muted)]">Выберите, из каких средств планируете сформировать первый взнос.</p>
+                    {showOwnAmount && (
+                      <div className="space-y-2">
+                        <input
+                          className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
+                          placeholder={
+                            form.downPaymentType === 'matcap_plus_own'
+                              ? 'Сколько собственных средств планируете внести? (₽)'
+                              : 'Какую сумму планируете внести в качестве первоначального взноса? (₽)'
+                          }
+                          type="number"
+                          min="0"
+                          value={form.downPaymentOwnAmount}
+                          onChange={(e) => {
+                            setValue('downPaymentOwnAmount', e.target.value);
+                            setAmountError('');
+                          }}
+                        />
+                        {amountError && <p className="text-sm text-red-500">{amountError}</p>}
+                      </div>
+                    )}
+                  </div>
+                )}
+                {step === 6 && (
                   <div className="grid gap-3">
                     <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={form.name} onChange={(e) => setValue('name', e.target.value)} required />
                     <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={form.phone} onChange={(e) => setValue('phone', e.target.value)} required />
@@ -149,7 +226,7 @@ export default function LeadFormSection() {
                   {step > 1 && (
                     <Button type="button" variant="ghost" onClick={prev}>Назад</Button>
                   )}
-                  {step < 5 ? (
+                  {step < stepTitles.length ? (
                     <Button type="button" onClick={next}>Далее</Button>
                   ) : (
                     <Button type="submit">Получить подборку</Button>

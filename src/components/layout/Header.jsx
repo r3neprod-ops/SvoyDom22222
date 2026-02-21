@@ -34,8 +34,18 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            <a href={brand.telegramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/60 backdrop-blur border border-black/10 transition-all duration-200 hover:bg-white/80 hover:shadow-sm focus-ring" aria-label="Telegram">
-              <img src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fa22e7fbb7bce4c9ca9dad8256ef64398?format=webp&width=800&height=1200" alt="Telegram" className="h-5 w-5 block object-contain" />
+            <a
+              href={brand.telegramUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Telegram"
+              className="focus-ring inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/90 ring-1 ring-black/10 shadow-sm transition-all duration-200 hover:bg-white hover:shadow-md"
+            >
+              <img
+                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAhElEQVRYR+2XQQ6AIAwEs///s9MHFQ6xwQdNLWQpLQXZxA0A0g0kQk7JmJj4Xw5Y6x6qfS8X9QJw3f2f6f0Y6Qk4gEwP9H4JmB7QvJx0Qn4xwKQz6y0x0u0hYlA9K6m2n6n0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0j8Y8A1qf0v0M9a4AAAAASUVORK5CYII="
+                alt="Telegram"
+                className="block h-8 w-8 object-contain"
+              />
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Подобрать варианты</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
