@@ -34,10 +34,8 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            <a href={brand.telegramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/60 backdrop-blur border border-black/10 text-slate-800 transition-all duration-200 hover:bg-white/80 hover:shadow-sm focus-ring" aria-label="Telegram">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.161.16-.295.295-.605.295-.397 0-.33-.149-.465-.526l-1.063-3.49c-.1-.328.076-.73.56-.906l7.657-2.954c.305-.11.717-.052.717.223 0 .063-.012.126-.037.291z" fill="currentColor"/>
-              </svg>
+            <a href={brand.telegramUrl} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center h-10 w-10 rounded-full bg-white/60 backdrop-blur border border-black/10 transition-all duration-200 hover:bg-white/80 hover:shadow-sm focus-ring" aria-label="Telegram">
+              <img src="/icons/telegram.png" alt="Telegram" className="h-5 w-5 block object-contain" />
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Подобрать варианты</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
