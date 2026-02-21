@@ -21,16 +21,39 @@ export default function HomePage() {
       <section id="hero" className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
         <div className="absolute inset-0" style={{ background: 'var(--heroGradient)' }} />
         <div className="absolute inset-0" style={{ background: 'var(--softFade)' }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(90deg, rgba(246,244,240,0.92) 0%, rgba(246,244,240,0.78) 40%, rgba(246,244,240,0.35) 70%, rgba(246,244,240,0.10) 100%)',
+          }}
+        />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(246,244,240,0.75) 0%, rgba(246,244,240,0.55) 55%, rgba(246,244,240,0.70) 100%)',
+          }}
+        />
         <Container className="relative">
-          <div className="max-w-4xl reveal">
-            <p className="mb-5 text-xs uppercase tracking-[0.24em] text-[color:var(--accent)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
-            <h1 className="text-4xl tracking-tight leading-[1.08] md:text-6xl">Квартира в ипотеку под 2%</h1>
-            <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[color:var(--muted)]">Помогаю выбрать ЖК и оформить ипотеку — бесплатно для вас</p>
-            <div className="mt-9 flex flex-wrap gap-3">
+          <div className="reveal max-w-4xl rounded-[20px] border border-[rgba(17,24,39,0.10)] bg-[rgba(255,255,255,0.55)] p-4 shadow-[0_18px_50px_rgba(17,24,39,0.12)] backdrop-blur-[10px] sm:p-5 md:p-7">
+            <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
+            <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] [text-shadow:0_1px_0_rgba(255,255,255,0.35)] md:text-6xl">Квартира в ипотеку под 2%</h1>
+            <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогаю выбрать ЖК и оформить ипотеку — бесплатно для вас</p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Button as="a" href="#lead-form">Подобрать варианты</Button>
-              <Button as="a" href={brand.telegramUrl} target="_blank" rel="noreferrer" variant="ghost">Написать в Telegram</Button>
+              <Button
+                as="a"
+                href={brand.telegramUrl}
+                target="_blank"
+                rel="noreferrer"
+                variant="ghost"
+                className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.40)] text-[color:var(--text)] backdrop-blur-[10px] hover:bg-[rgba(255,255,255,0.55)] hover:shadow-md active:bg-[rgba(255,255,255,0.32)]"
+              >
+                Написать в Telegram
+              </Button>
             </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[color:var(--muted)]">
+            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.70)]">
               <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
               <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
             </div>
