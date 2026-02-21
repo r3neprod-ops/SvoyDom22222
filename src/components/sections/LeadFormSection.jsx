@@ -66,6 +66,7 @@ export default function LeadFormSection() {
   const [form, setForm] = useState(initialState);
   const [open, setOpen] = useState(false);
   const [modalStep, setModalStep] = useState(1);
+  const [embeddedStep, setEmbeddedStep] = useState(1);
   const [done, setDone] = useState(false);
   const [amountError, setAmountError] = useState('');
 
@@ -81,11 +82,16 @@ export default function LeadFormSection() {
     return apartmentOptionsBase;
   }, [form.propertyType]);
 
-  const progress = useMemo(() => {
+  const modalProgress = useMemo(() => {
     if (done) return 100;
     const percent = Math.round((modalStep / stepTitles.length) * 100);
     return Math.min(100, Math.max(0, percent));
   }, [done, modalStep]);
+
+  const embeddedProgress = useMemo(() => {
+    const percent = Math.round((embeddedStep / stepTitles.length) * 100);
+    return Math.min(100, Math.max(0, percent));
+  }, [embeddedStep]);
 
   const closeModal = () => {
     sessionStorage.setItem('leadModalClosed', '1');
@@ -103,30 +109,25 @@ export default function LeadFormSection() {
     setAmountError('');
   };
 
-  const continueFromInline = () => {
-    setModalStep(1);
-    setOpen(true);
-  };
-
   const isOwnAmountValid = () => {
     if (!form.downPaymentOwnAmount) return true;
     const amount = Number(form.downPaymentOwnAmount);
     return Number.isFinite(amount) && amount > 0;
   };
 
-  const canProceed = useMemo(() => {
-    if (modalStep === 1) return Boolean(form.propertyType);
-    if (modalStep === 2) return Boolean(form.apartmentType);
-    if (modalStep === 3) return Boolean(form.timeline);
-    if (modalStep === 4) {
+  const canProceed = (step) => {
+    if (step === 1) return Boolean(form.propertyType);
+    if (step === 2) return Boolean(form.apartmentType);
+    if (step === 3) return Boolean(form.timeline);
+    if (step === 4) {
       if (!form.budgetPreset) return false;
       if (form.budgetPreset === 'custom') return Boolean(form.budgetCustom.trim());
       return true;
     }
     return true;
-  }, [modalStep, form]);
+  };
 
-  const next = () => {
+  const nextModal = () => {
     if (modalStep === 5 && !isOwnAmountValid()) {
       setAmountError('Введите сумму больше 0 или оставьте поле пустым.');
       return;
@@ -135,9 +136,22 @@ export default function LeadFormSection() {
     setModalStep((prev) => Math.min(prev + 1, stepTitles.length));
   };
 
-  const prev = () => {
+  const prevModal = () => {
     setAmountError('');
     setModalStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  const nextEmbedded = () => {
+    setEmbeddedStep((prev) => Math.min(prev + 1, 2));
+  };
+
+  const prevEmbedded = () => {
+    setEmbeddedStep((prev) => Math.max(prev - 1, 1));
+  };
+
+  const continueFromInline = () => {
+    setModalStep(3);
+    setOpen(true);
   };
 
   const submit = (event) => {
@@ -160,6 +174,128 @@ export default function LeadFormSection() {
 
   const showOwnAmount = form.downPaymentType === 'matcap_plus_own' || form.downPaymentType === 'own';
 
+  const renderStep = (step) => {
+    if (step === 1) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Что вы хотите подобрать?</p>
+          <InlineChoice
+            options={propertyOptions.map((item) => item.label)}
+            value={propertyOptions.find((item) => item.value === form.propertyType)?.label || ''}
+            onSelect={(label) => {
+              const option = propertyOptions.find((item) => item.label === label);
+              if (option) setValue('propertyType', option.value);
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (step === 2) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Какой вариант вы рассматриваете?</p>
+          <InlineChoice
+            options={apartmentOptions.map((item) => item.label)}
+            value={apartmentOptions.find((item) => item.value === form.apartmentType)?.label || ''}
+            onSelect={(label) => {
+              const option = apartmentOptions.find((item) => item.label === label);
+              if (option) setValue('apartmentType', option.value);
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (step === 3) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Насколько срочно нужен подбор?</p>
+          <InlineChoice
+            options={timelineOptions.map((item) => item.label)}
+            value={timelineOptions.find((item) => item.value === form.timeline)?.label || ''}
+            onSelect={(label) => {
+              const option = timelineOptions.find((item) => item.label === label);
+              if (option) setValue('timeline', option.value);
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (step === 4) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">На какой бюджет ориентируетесь?</p>
+          <InlineChoice
+            options={budgetOptions.map((item) => item.label)}
+            value={budgetOptions.find((item) => item.value === form.budgetPreset)?.label || ''}
+            onSelect={(label) => {
+              const option = budgetOptions.find((item) => item.label === label);
+              if (option) setValue('budgetPreset', option.value);
+            }}
+          />
+          {form.budgetPreset === 'custom' && (
+            <div className="space-y-2">
+              <label className="text-sm text-[color:var(--muted)]">Введите сумму (можно примерно)</label>
+              <input
+                className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
+                placeholder="Например: 7 500 000"
+                value={form.budgetCustom}
+                onChange={(e) => setValue('budgetCustom', e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (step === 5) {
+      return (
+        <div className="space-y-4">
+          <InlineChoice
+            options={downPaymentOptions.map((item) => item.label)}
+            value={downPaymentOptions.find((item) => item.value === form.downPaymentType)?.label || ''}
+            onSelect={(label) => {
+              const option = downPaymentOptions.find((item) => item.label === label);
+              if (option) setDownPaymentType(option.value);
+            }}
+          />
+          <p className="text-sm text-[color:var(--muted)]">Выберите, из каких средств планируете сформировать первый взнос.</p>
+          {showOwnAmount && (
+            <div className="space-y-2">
+              <input
+                className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
+                placeholder={
+                  form.downPaymentType === 'matcap_plus_own'
+                    ? 'Сколько собственных средств планируете внести? (₽)'
+                    : 'Какую сумму планируете внести в качестве первоначального взноса? (₽)'
+                }
+                type="number"
+                min="0"
+                value={form.downPaymentOwnAmount}
+                onChange={(e) => {
+                  setValue('downPaymentOwnAmount', e.target.value);
+                  setAmountError('');
+                }}
+              />
+              {amountError && <p className="text-sm text-red-500">{amountError}</p>}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid gap-3">
+        <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — пришлю подборку</p>
+        <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={form.name} onChange={(e) => setValue('name', e.target.value)} required />
+        <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={form.phone} onChange={(e) => setValue('phone', e.target.value)} required />
+        <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={form.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
+      </div>
+    );
+  };
+
   return (
     <>
       <section id="lead-form" className="py-12 md:py-16">
@@ -167,31 +303,23 @@ export default function LeadFormSection() {
           <Card className="reveal rounded-[22px] border-[rgba(17,24,39,0.10)] bg-[rgba(255,255,255,0.62)] p-7 shadow-[0_18px_50px_rgba(17,24,39,0.10)] [backdrop-filter:blur(14px)_saturate(120%)] transition-colors duration-200 hover:border-[rgba(17,24,39,0.14)] hover:shadow-[0_22px_58px_rgba(17,24,39,0.12)] md:p-10">
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Короткая заявка</p>
             <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Подобрать варианты</h2>
-            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Ответьте на 2 коротких вопроса, а остальное заполним в удобном окне.</p>
+            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Ответьте на 2 коротких вопроса, а остальное продолжим в удобном окне.</p>
 
-            <div className="mt-8 grid gap-6 md:grid-cols-2">
-              <InlineChoice
-                title="Что вы хотите подобрать?"
-                options={propertyOptions.map((item) => item.label)}
-                value={propertyOptions.find((item) => item.value === form.propertyType)?.label || ''}
-                onSelect={(label) => {
-                  const option = propertyOptions.find((item) => item.label === label);
-                  if (option) setValue('propertyType', option.value);
-                }}
-              />
-              <InlineChoice
-                title="Какой вариант вы рассматриваете?"
-                options={apartmentOptions.map((item) => item.label)}
-                value={apartmentOptions.find((item) => item.value === form.apartmentType)?.label || ''}
-                onSelect={(label) => {
-                  const option = apartmentOptions.find((item) => item.label === label);
-                  if (option) setValue('apartmentType', option.value);
-                }}
-              />
+            <div className="mb-6 mt-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
+              <div className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all" style={{ width: `${embeddedProgress}%` }} />
             </div>
 
-            <div className="mt-8">
-              <Button onClick={continueFromInline}>Продолжить подбор</Button>
+            {renderStep(embeddedStep)}
+
+            <div className="mt-8 flex flex-wrap gap-3">
+              {embeddedStep > 1 && (
+                <Button type="button" variant="ghost" onClick={prevEmbedded}>Назад</Button>
+              )}
+              {embeddedStep < 2 ? (
+                <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
+              ) : (
+                <Button type="button" onClick={continueFromInline} disabled={!canProceed(2)}>Продолжить подбор</Button>
+              )}
             </div>
           </Card>
         </Container>
@@ -209,10 +337,7 @@ export default function LeadFormSection() {
             </div>
 
             <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
-              <div
-                className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all"
-                style={{ width: `${progress}%` }}
-              />
+              <div className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all" style={{ width: `${modalProgress}%` }} />
             </div>
 
             {done ? (
@@ -222,122 +347,14 @@ export default function LeadFormSection() {
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-6">
-                {modalStep === 1 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">Что вы хотите подобрать?</p>
-                    <InlineChoice
-                      options={propertyOptions.map((item) => item.label)}
-                      value={propertyOptions.find((item) => item.value === form.propertyType)?.label || ''}
-                      onSelect={(label) => {
-                        const option = propertyOptions.find((item) => item.label === label);
-                        if (option) setValue('propertyType', option.value);
-                      }}
-                    />
-                  </div>
-                )}
-
-                {modalStep === 2 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">Какой вариант вы рассматриваете?</p>
-                    <InlineChoice
-                      options={apartmentOptions.map((item) => item.label)}
-                      value={apartmentOptions.find((item) => item.value === form.apartmentType)?.label || ''}
-                      onSelect={(label) => {
-                        const option = apartmentOptions.find((item) => item.label === label);
-                        if (option) setValue('apartmentType', option.value);
-                      }}
-                    />
-                  </div>
-                )}
-
-                {modalStep === 3 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">Насколько срочно нужен подбор?</p>
-                    <InlineChoice
-                      options={timelineOptions.map((item) => item.label)}
-                      value={timelineOptions.find((item) => item.value === form.timeline)?.label || ''}
-                      onSelect={(label) => {
-                        const option = timelineOptions.find((item) => item.label === label);
-                        if (option) setValue('timeline', option.value);
-                      }}
-                    />
-                  </div>
-                )}
-
-                {modalStep === 4 && (
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">На какой бюджет ориентируетесь?</p>
-                    <InlineChoice
-                      options={budgetOptions.map((item) => item.label)}
-                      value={budgetOptions.find((item) => item.value === form.budgetPreset)?.label || ''}
-                      onSelect={(label) => {
-                        const option = budgetOptions.find((item) => item.label === label);
-                        if (option) setValue('budgetPreset', option.value);
-                      }}
-                    />
-                    {form.budgetPreset === 'custom' && (
-                      <div className="space-y-2">
-                        <label className="text-sm text-[color:var(--muted)]">Введите сумму (можно примерно)</label>
-                        <input
-                          className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
-                          placeholder="Например: 7 500 000"
-                          value={form.budgetCustom}
-                          onChange={(e) => setValue('budgetCustom', e.target.value)}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {modalStep === 5 && (
-                  <div className="space-y-4">
-                    <InlineChoice
-                      options={downPaymentOptions.map((item) => item.label)}
-                      value={downPaymentOptions.find((item) => item.value === form.downPaymentType)?.label || ''}
-                      onSelect={(label) => {
-                        const option = downPaymentOptions.find((item) => item.label === label);
-                        if (option) setDownPaymentType(option.value);
-                      }}
-                    />
-                    <p className="text-sm text-[color:var(--muted)]">Выберите, из каких средств планируете сформировать первый взнос.</p>
-                    {showOwnAmount && (
-                      <div className="space-y-2">
-                        <input
-                          className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
-                          placeholder={
-                            form.downPaymentType === 'matcap_plus_own'
-                              ? 'Сколько собственных средств планируете внести? (₽)'
-                              : 'Какую сумму планируете внести в качестве первоначального взноса? (₽)'
-                          }
-                          type="number"
-                          min="0"
-                          value={form.downPaymentOwnAmount}
-                          onChange={(e) => {
-                            setValue('downPaymentOwnAmount', e.target.value);
-                            setAmountError('');
-                          }}
-                        />
-                        {amountError && <p className="text-sm text-red-500">{amountError}</p>}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {modalStep === 6 && (
-                  <div className="grid gap-3">
-                    <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — пришлю подборку</p>
-                    <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={form.name} onChange={(e) => setValue('name', e.target.value)} required />
-                    <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={form.phone} onChange={(e) => setValue('phone', e.target.value)} required />
-                    <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={form.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
-                  </div>
-                )}
+                {renderStep(modalStep)}
 
                 <div className="flex flex-wrap gap-3">
                   {modalStep > 1 && (
-                    <Button type="button" variant="ghost" onClick={prev}>Назад</Button>
+                    <Button type="button" variant="ghost" onClick={prevModal}>Назад</Button>
                   )}
                   {modalStep < stepTitles.length ? (
-                    <Button type="button" onClick={next} disabled={!canProceed}>Далее</Button>
+                    <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>Далее</Button>
                   ) : (
                     <Button type="submit" disabled={!form.name.trim() || !form.phone.trim()}>Получить подборку</Button>
                   )}
