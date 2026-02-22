@@ -22,6 +22,7 @@ export default function HomePage() {
       <div
         className="relative"
         style={{
+          backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F6e6b28460afc4aa4a8fb711213fa8d32)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -36,12 +37,22 @@ export default function HomePage() {
         />
 
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
-          <Container className="relative">
+          {/* Hero Text Overlay - layered gradients for text readability */}
+          <div
+            className="absolute inset-y-0 left-0 pointer-events-none w-full sm:w-[55%] md:w-[60%]"
+            style={{
+              backgroundImage: `linear-gradient(90deg, rgba(247,242,234,0.92) 0%, rgba(247,242,234,0.70) 45%, rgba(247,242,234,0.10) 100%), linear-gradient(180deg, rgba(247,242,234,0.75) 0%, rgba(247,242,234,0.55) 55%, rgba(247,242,234,0.72) 100%)`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              zIndex: 5,
+            }}
+          />
+          <Container className="relative z-10">
             <div className="reveal max-w-4xl bg-transparent p-4 shadow-none backdrop-blur-0 sm:p-5 md:p-7">
-              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
+              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,1)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
               <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] [text-shadow:0_1px_0_rgba(255,255,255,0.35)] md:text-6xl">Квартира в ипотеку под 2%</h1>
-              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
-              <p className="mt-3 text-sm text-[rgba(17,24,39,0.70)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
+              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,1)] border border-[rgba(112,135,151,0)] shadow-[1px_1px_3px_0_rgba(0,0,0,1)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
+              <p className="mt-3 text-sm text-[rgba(17,24,39,1)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                 <Button as="a" href="#lead-form">Получить консультацию</Button>
                 <Button
@@ -50,14 +61,14 @@ export default function HomePage() {
                   target="_blank"
                   rel="noreferrer"
                   variant="ghost"
-                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
+                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[rgba(0,0,0,1)] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
                 >
                   Написать в Telegram
                 </Button>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.70)]">
-                <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
-                <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <a className="focus-ring rounded-lg px-1 text-[rgba(0,0,0,1)]" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
+                <a className="focus-ring rounded-lg px-1 text-[rgba(0,0,0,1)]" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
               </div>
             </div>
           </Container>
