@@ -85,10 +85,25 @@ export default function HomePage() {
       <section id="complexes" className="py-20 md:py-28">
         <Container>
           <SectionHeader eyebrow="ЖК" title="Жилые комплексы" subtitle="Сравните ключевые варианты и выберите формат, который подходит под ваш сценарий покупки." />
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-            {complexes.map((item) => (
-              <ComplexCarouselCard key={item.id} complex={item} />
-            ))}
+          <div className="space-y-4">
+            <div
+              className="relative rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-2 gap-4"
+              style={{
+                backgroundImage: 'url()',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+              }}
+            >
+              {complexes.slice(0, 2).map((item) => (
+                <ComplexCarouselCard key={item.id} complex={item} />
+              ))}
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+              {complexes.slice(2).map((item) => (
+                <ComplexCarouselCard key={item.id} complex={item} />
+              ))}
+            </div>
           </div>
         </Container>
       </section>
