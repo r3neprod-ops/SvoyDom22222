@@ -56,7 +56,25 @@ export default function ComplexCarouselCard({ complex }) {
               slotKey={`complex-${complex.id}-photo-${index + 1}`}
               fileHint={`complex-${complex.id}-photo-${index + 1}.jpg`}
               className="h-full"
-            />
+              backgroundImage={complex.backgroundImage}
+            >
+              {index === activeIndex && complex.extraImage && (
+                <img
+                  loading="lazy"
+                  srcSet={complex.extraImage.srcSet}
+                  style={{
+                    aspectRatio: '1.42',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    width: '100%',
+                    marginTop: '20px',
+                    minHeight: '20px',
+                    minWidth: '20px',
+                    overflow: 'hidden',
+                  }}
+                />
+              )}
+            </SlotBox>
           </div>
         ))}
 

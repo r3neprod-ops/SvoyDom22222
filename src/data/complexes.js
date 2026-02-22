@@ -5,6 +5,7 @@ const complexes = [
     subtitle: 'Современный комплекс рядом с парком и удобной городской инфраструктурой.',
     tags: ['рядом с парком', 'инфраструктура'],
     photos: ['renovaciya-1', 'renovaciya-2', 'renovaciya-3'],
+    backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fc3f1fe7a2743421ba728712045d95f5d)',
   },
   {
     id: 'aura',
@@ -12,6 +13,10 @@ const complexes = [
     subtitle: 'Новый проект с продуманными планировками и быстрым выездом к центру.',
     tags: ['семейный формат', 'удобная логистика'],
     photos: ['aura-1', 'aura-2', 'aura-3'],
+    backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fba0c16f443a8418380f1915fb69d301f)',
+    extraImage: {
+      srcSet: 'https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=100 100w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=200 200w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=400 400w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=800 800w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=1200 1200w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=1600 1600w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a?width=2000 2000w, https://cdn.builder.io/api/v1/image/assets%2FYJIGb4i01jvw0SRdL5Bt%2F72c80f114dc149019051b6852a9e3b7a',
+    },
   },
   {
     id: 'druzhba',
@@ -19,6 +24,7 @@ const complexes = [
     subtitle: 'Жилой комплекс с закрытой территорией, дворами без машин и сервисами рядом.',
     tags: ['закрытый двор', 'сервисы рядом'],
     photos: ['druzhba-1', 'druzhba-2', 'druzhba-3'],
+    backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F98e6359f75504270b44a6c236836ae76)',
   },
   {
     id: 'parkline',
