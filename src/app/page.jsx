@@ -19,51 +19,52 @@ export default function HomePage() {
       <RevealOnScroll />
       <Header />
 
-      <section id="hero" className="relative overflow-hidden pt-28 pb-16 md:pt-36 md:pb-24">
-        <div className="absolute inset-0" style={{ background: 'var(--heroGradient)' }} />
-        <div className="absolute inset-0" style={{ background: 'var(--softFade)' }} />
+      <div
+        className="relative"
+        style={{
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Overlay for text readability */}
         <div
           className="absolute inset-0"
           style={{
-            background:
-              'linear-gradient(90deg, rgba(246,244,240,0.92) 0%, rgba(246,244,240,0.78) 40%, rgba(246,244,240,0.35) 70%, rgba(246,244,240,0.10) 100%)',
+            background: 'linear-gradient(180deg, rgba(247,242,234,0.75) 0%, rgba(247,242,234,0.55) 60%, rgba(247,242,234,0.78) 100%)',
           }}
         />
-        <div
-          className="absolute inset-0"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(246,244,240,0.75) 0%, rgba(246,244,240,0.55) 55%, rgba(246,244,240,0.70) 100%)',
-          }}
-        />
-        <Container className="relative">
-          <div className="reveal max-w-4xl bg-transparent p-4 shadow-none backdrop-blur-0 sm:p-5 md:p-7">
-            <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
-            <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] [text-shadow:0_1px_0_rgba(255,255,255,0.35)] md:text-6xl">Квартира в ипотеку под 2%</h1>
-            <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
-            <p className="mt-3 text-sm text-[rgba(17,24,39,0.70)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
-            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-              <Button as="a" href="#lead-form">Получить консультацию</Button>
-              <Button
-                as="a"
-                href={brand.telegramUrl}
-                target="_blank"
-                rel="noreferrer"
-                variant="ghost"
-                className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
-              >
-                Написать в Telegram
-              </Button>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.70)]">
-              <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
-              <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
-            </div>
-          </div>
-        </Container>
-      </section>
 
-      <LeadFormSection />
+        <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
+          <Container className="relative">
+            <div className="reveal max-w-4xl bg-transparent p-4 shadow-none backdrop-blur-0 sm:p-5 md:p-7">
+              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
+              <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] [text-shadow:0_1px_0_rgba(255,255,255,0.35)] md:text-6xl">Квартира в ипотеку под 2%</h1>
+              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.70)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
+              <p className="mt-3 text-sm text-[rgba(17,24,39,0.70)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <Button as="a" href="#lead-form">Получить консультацию</Button>
+                <Button
+                  as="a"
+                  href={brand.telegramUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  variant="ghost"
+                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
+                >
+                  Написать в Telegram
+                </Button>
+              </div>
+              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.70)]">
+                <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
+                <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        <LeadFormSection />
+      </div>
 
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
