@@ -15,8 +15,14 @@ export default function SlotBox({
       backgroundSize: 'cover',
     } : {};
 
+    // Use slot-box-with-image class when backgroundImage is provided
+    // This prevents the placeholder gradient from overlaying the actual image
+    const slotClass = backgroundImage
+      ? `slot-box-with-image ${className}`
+      : `slot-box ${className}`;
+
     return (
-      <div className={`slot-box ${className}`} aria-hidden="true" style={style}>
+      <div className={slotClass} aria-hidden="true" style={style}>
         {children}
       </div>
     );
