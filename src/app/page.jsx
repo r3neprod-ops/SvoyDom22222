@@ -72,7 +72,7 @@ export default function HomePage() {
         {/* MascotLayer - Independent absolute layer covering hero + lead form */}
         <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
           {/* MascotSlot - Positioned zone for mascot */}
-          <div className="absolute flex flex-grow items-end justify-center" style={{ right: '80px', top: '107px', width: '100%', height: 'auto', minHeight: '0px', maxWidth: '442px' }}>
+          <div className="absolute flex flex-grow items-end justify-center" style={{ right: '80px', top: '107px', width: '100%', height: 'auto', minHeight: '0px', maxWidth: '442px', left: '1530px' }}>
             <img
               src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
               alt="Mascot"
