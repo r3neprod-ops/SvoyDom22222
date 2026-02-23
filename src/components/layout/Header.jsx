@@ -68,6 +68,28 @@ export default function Header() {
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
+            <a
+              href={`tel:${brand.phoneHref}`}
+              className="focus-ring rounded-lg transition-all duration-200"
+              style={{
+                paddingLeft: '16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                color: '#111827',
+                opacity: 0.85,
+                borderBottom: '1px solid transparent',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.borderBottomColor = 'rgba(17,24,39,0.35)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '0.85';
+                e.currentTarget.style.borderBottomColor = 'transparent';
+              }}
+            >
+              {brand.phoneDisplay}
+            </a>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
