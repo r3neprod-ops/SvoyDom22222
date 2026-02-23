@@ -32,7 +32,7 @@ export default function HomePage() {
         <img
           src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F3f70e995611746bea47c466516299b99?format=webp&width=800&height=1200"
           alt="Mascot"
-          className="absolute z-20"
+          className="absolute z-20 reveal"
           style={{
             width: '17%',
             height: 'auto',
