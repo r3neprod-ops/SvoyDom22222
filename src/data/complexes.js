@@ -1,7 +1,7 @@
 const complexes = [
   {
     id: 'renovaciya',
-    title: 'РЕНОВАЦИЯ',
+    title: 'ТРИЛИСТНИК',
     subtitle: 'Современный комплекс рядом с парком и удобной городской инфраструктурой.',
     tags: ['рядом с парком', 'инфраструктура'],
     photos: ['renovaciya-1', 'renovaciya-2', 'renovaciya-3'],
