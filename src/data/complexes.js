@@ -31,20 +31,6 @@ const complexes = [
     photos: ['druzhba-1', 'druzhba-2', 'druzhba-3'],
     backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F98e6359f75504270b44a6c236836ae76)',
   },
-  {
-    id: 'parkline',
-    title: 'Парк Лайн',
-    subtitle: 'Современные дома бизнес-класса с акцентом на комфорт и приватность.',
-    tags: ['бизнес-класс', 'приватность'],
-    photos: ['parkline-1', 'parkline-2', 'parkline-3'],
-  },
-  {
-    id: 'severny',
-    title: 'Северный квартал',
-    subtitle: 'Спокойный жилой квартал с зелёными зонами и удобной транспортной доступностью.',
-    tags: ['зелёные зоны', 'транспорт рядом'],
-    photos: ['severny-1', 'severny-2', 'severny-3'],
-  },
 ];
 
 export default complexes;
