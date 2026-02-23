@@ -68,28 +68,20 @@ export default function Header() {
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
-            <a
-              href={`tel:${brand.phoneHref}`}
-              className="focus-ring rounded-lg transition-all duration-200"
+            <span
+              className="hidden lg:inline-block"
               style={{
-                paddingLeft: '16px',
-                fontSize: '14px',
+                marginLeft: '18px',
+                fontSize: '17px',
                 fontWeight: '600',
                 color: '#111827',
-                opacity: 0.85,
-                borderBottom: '1px solid transparent',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.opacity = '1';
-                e.currentTarget.style.borderBottomColor = 'rgba(17,24,39,0.35)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.opacity = '0.85';
-                e.currentTarget.style.borderBottomColor = 'transparent';
+                letterSpacing: '0.2px',
+                opacity: 0.9,
+                lineHeight: '1',
               }}
             >
-              {brand.phoneDisplay}
-            </a>
+              +7 959 026-00-36
+            </span>
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
