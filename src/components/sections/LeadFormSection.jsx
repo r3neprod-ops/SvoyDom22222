@@ -68,6 +68,7 @@ export default function LeadFormSection() {
   const [modalStep, setModalStep] = useState(1);
   const [embeddedStep, setEmbeddedStep] = useState(1);
   const [done, setDone] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [embeddedDone, setEmbeddedDone] = useState(false);
   const [amountError, setAmountError] = useState('');
 
@@ -166,7 +167,7 @@ export default function LeadFormSection() {
     setEmbeddedStep(1);
   };
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
     const payload = {
       propertyType: leadAnswers.propertyType,
@@ -180,8 +181,26 @@ export default function LeadFormSection() {
       phone: leadAnswers.phone,
       telegram: leadAnswers.telegram,
     };
-    console.log('lead-payload', payload);
-    setDone(true);
+
+    try {
+      const response = await fetch('/api/lead', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send lead');
+      }
+
+      setSubmitError(false);
+      setDone(true);
+    } catch {
+      setSubmitError(true);
+      setDone(true);
+    }
   };
 
   const showOwnAmount = leadAnswers.downPaymentType === 'matcap_plus_own' || leadAnswers.downPaymentType === 'own';
@@ -360,7 +379,9 @@ export default function LeadFormSection() {
 
             {done ? (
               <div className="space-y-5">
-                <p className="text-[color:var(--muted)]">Спасибо! Свяжусь с вами, уточню детали и помогу выбрать подходящий вариант.</p>
+                <p className="text-[color:var(--muted)]">
+                  {submitError ? 'Не удалось отправить. Попробуйте ещё раз.' : 'Спасибо! Я свяжусь с вами и пришлю варианты.'}
+                </p>
                 <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button onClick={closeModal}>Закрыть</Button>
               </div>
