@@ -65,12 +65,13 @@ export default function HomePage() {
               </div>
 
               {/* Mascot Image */}
-              <div className="hidden lg:flex items-end justify-end">
+              <div className="hidden lg:flex flex-col items-end justify-end">
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
                   alt="Mascot"
                   className="w-96 h-auto object-contain"
                 />
+                <div className="w-72 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full -mt-2" />
               </div>
             </div>
           </Container>
