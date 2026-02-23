@@ -70,10 +70,7 @@ export default function HomePage() {
 
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
-          <SectionHeader
-            eyebrow="Мои услуги"
-            title="Помогу выбрать ЖК и оформить ипотеку, взяв на себя все этапы работы с банками и застройщиками."
-          />
+          <SectionHeader title="Помогу выбрать ЖК и оформить ипотеку, взяв на себя все этапы работы с банками и застройщиками." />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {services.map((item) => (
               <Card key={item.title} className="reveal">
@@ -87,7 +84,7 @@ export default function HomePage() {
 
       <section id="complexes" className="py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="ЖК" title="Жилые комплексы" subtitle="Сравните ключевые варианты и выберите формат, который подходит под ваш сценарий покупки." />
+          <SectionHeader title="Жилые комплексы" subtitle="Сравните ключевые варианты и выберите формат, который подходит под ваш сценарий покупки." />
           <div className="space-y-4">
             {/* Top row: 2 cards side by side */}
             <div
@@ -117,7 +114,7 @@ export default function HomePage() {
 
       <section id="process" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="Как я работаю" title="Пошаговое сопровождение до подписания договора" />
+          <SectionHeader title="Пошаговое сопровождение до подписания договора" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {processSteps.map((item, idx) => (
               <Card key={item.title} className="reveal">
@@ -132,7 +129,7 @@ export default function HomePage() {
 
       <section id="reviews" className="py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="Отзывы" title="Что говорят клиенты" />
+          <SectionHeader title="Что говорят клиенты" />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {reviews.map((review) => (
               <Card key={review.name + review.sourceLabel} className="reveal">
@@ -147,7 +144,7 @@ export default function HomePage() {
 
       <section id="faq" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="FAQ" title="Частые вопросы" />
+          <SectionHeader title="Частые вопросы" />
           <div className="mb-6 rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.68)] p-5">
             <h3 className="text-xl tracking-tight">Почему для вас бесплатно?</h3>
             <p className="mt-2 text-[color:var(--muted)]">Я сотрудничаю с застройщиками по Луганску. Когда вы выходите на сделку, застройщик оплачивает мою работу как партнёру. Для вас цена квартиры не меняется — вы получаете консультацию и сопровождение бесплатно.</p>
@@ -165,7 +162,7 @@ export default function HomePage() {
 
       <section id="contacts" className="py-20 md:py-28">
         <Container>
-          <SectionHeader eyebrow="Контакты" title="Оставьте заявку или напишите в Telegram" subtitle="Свяжусь с вами, уточню детали и покажу варианты, которые реально подходят." />
+          <SectionHeader title="Оставьте заявку или напишите в Telegram" subtitle="Свяжусь с вами, уточню детали и покажу варианты, которые реально подходят." />
           <Card className="reveal">
             <div className="flex flex-wrap items-start justify-between gap-6">
               <div>
