@@ -29,7 +29,7 @@ export default function HomePage() {
         }}
       >
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
-          <Container>
+          <Container className="flex flex-col gap-5">
             {/* Hero Text Panel - localized backdrop only under content */}
             <div
               className="reveal max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
