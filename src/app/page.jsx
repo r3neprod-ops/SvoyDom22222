@@ -30,36 +30,47 @@ export default function HomePage() {
       >
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
           <Container>
-            {/* Hero Text Panel - localized backdrop only under content */}
-            <div
-              className="reveal max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
-              style={{
-                background: 'rgba(255, 255, 255, 0.55)',
-                backdropFilter: 'blur(10px) saturate(120%)',
-                WebkitBackdropFilter: 'blur(10px) saturate(120%)',
-                boxShadow: '0 18px 50px rgba(17,24,39,0.10)',
-              }}
-            >
-              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
-              <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] md:text-6xl">Квартира в ипотеку под 2%</h1>
-              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.72)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
-              <p className="mt-3 text-sm text-[rgba(17,24,39,0.72)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button as="a" href="#lead-form">Получить консультацию</Button>
-                <Button
-                  as="a"
-                  href={brand.telegramUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  variant="ghost"
-                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
-                >
-                  Написать в Telegram
-                </Button>
+            <div className="relative flex items-start gap-8 lg:gap-12">
+              {/* Hero Text Panel - localized backdrop only under content */}
+              <div
+                className="reveal max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.55)',
+                  backdropFilter: 'blur(10px) saturate(120%)',
+                  WebkitBackdropFilter: 'blur(10px) saturate(120%)',
+                  boxShadow: '0 18px 50px rgba(17,24,39,0.10)',
+                }}
+              >
+                <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
+                <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] md:text-6xl">Квартира в ипотеку под 2%</h1>
+                <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.72)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
+                <p className="mt-3 text-sm text-[rgba(17,24,39,0.72)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
+                <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <Button as="a" href="#lead-form">Получить консультацию</Button>
+                  <Button
+                    as="a"
+                    href={brand.telegramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    variant="ghost"
+                    className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
+                  >
+                    Написать в Telegram
+                  </Button>
+                </div>
+                <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.72)]">
+                  <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
+                  <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+                </div>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.72)]">
-                <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
-                <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+
+              {/* Mascot Image */}
+              <div className="hidden lg:flex lg:flex-1 items-start justify-end pt-8">
+                <img
+                  src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
+                  alt="Mascot"
+                  className="w-full max-w-xs object-contain"
+                />
               </div>
             </div>
           </Container>
