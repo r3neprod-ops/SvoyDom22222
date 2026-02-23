@@ -69,7 +69,7 @@ export default function HomePage() {
                 <img
                   src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
                   alt="Mascot"
-                  className="w-80 h-auto object-contain"
+                  className="w-96 h-auto object-contain"
                 />
               </div>
             </div>
