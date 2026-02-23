@@ -13,7 +13,11 @@ const complexes = [
     subtitle: 'Новый проект с продуманными планировками и быстрым выездом к центру.',
     tags: ['семейный формат', 'удобная логистика'],
     photos: ['aura-1', 'aura-2', 'aura-3'],
-    backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fba0c16f443a8418380f1915fb69d301f)',
+    backgroundImages: [
+      'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F7c4abadbc0834267bfd7c26f687fb07b)',
+      'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fba0c16f443a8418380f1915fb69d301f)',
+      'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fc5c2f4bf54c34192bc477d98d82ba431)',
+    ],
   },
   {
     id: 'druzhba',

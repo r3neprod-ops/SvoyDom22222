@@ -69,7 +69,11 @@ export default function ComplexCarouselCard({ complex }) {
                   slotKey={`complex-${complex.id}-photo-${index + 1}`}
                   fileHint={`complex-${complex.id}-photo-${index + 1}.jpg`}
                   className="h-32"
-                  backgroundImage={complex.backgroundImage}
+                  backgroundImage={
+                    Array.isArray(complex.backgroundImages)
+                      ? complex.backgroundImages[index]
+                      : complex.backgroundImage
+                  }
                 />
                 <p className="text-xs text-[color:var(--muted)] px-2 py-1 bg-[color:var(--bg2)]">Slot {index + 1}</p>
               </div>
@@ -98,7 +102,11 @@ export default function ComplexCarouselCard({ complex }) {
                   slotKey={`complex-${complex.id}-photo-${index + 1}`}
                   fileHint={`complex-${complex.id}-photo-${index + 1}.jpg`}
                   className="h-full"
-                  backgroundImage={complex.backgroundImage}
+                  backgroundImage={
+                    Array.isArray(complex.backgroundImages)
+                      ? complex.backgroundImages[index]
+                      : complex.backgroundImage
+                  }
                 >
                   {index === activeIndex && complex.extraImage && (
                     <img
