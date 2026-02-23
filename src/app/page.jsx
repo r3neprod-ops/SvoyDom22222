@@ -63,20 +63,21 @@ export default function HomePage() {
                   <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
                 </div>
               </div>
-
-              {/* Mascot Slot - Right side zone */}
-              <div className="hidden lg:flex lg:flex-1 items-end justify-center relative">
-                <div className="relative w-80 h-full flex items-end justify-center">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
-                    alt="Mascot"
-                    className="w-full h-auto object-contain"
-                  />
-                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-64 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full" />
-                </div>
-              </div>
             </div>
           </Container>
+
+          {/* MascotLayer - Independent absolute layer */}
+          <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
+            {/* MascotSlot - Positioned zone for mascot */}
+            <div className="absolute flex items-end justify-center" style={{ right: '80px', top: '120px', width: '280px', height: '480px' }}>
+              <img
+                src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
+                alt="Mascot"
+                className="max-h-full w-auto object-contain"
+              />
+              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-60 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full" />
+            </div>
+          </div>
         </section>
 
         <LeadFormSection />
