@@ -60,9 +60,9 @@ export default function Header() {
                 if (icon) icon.setAttribute('fill', '#111827');
               }}
             >
-              {/* Telegram official plane icon */}
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21.9 4.6c.3-1.2-.9-2.1-2-1.7L2.8 9.7c-1.2.5-1.2 2.2 0 2.7l4.6 1.8 1.7 5.3c.3 1 1.5 1.3 2.2.6l2.6-2.6 5 3.7c.9.7 2.2.2 2.4-1l2.7-15.6ZM8.1 13.7l10.8-7.2-8.5 8.6-.3 3.2-1.2-3.8-4.3-1.7 15.3-6.2-2.4 14.2-4.6-3.4-3.4 3.4.5-5.1-2-2Z"/>
+              {/* Telegram official plane icon - fill only, no stroke */}
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path fill="currentColor" stroke="none" strokeWidth="0" d="M21.9 4.6c.3-1.2-.9-2.1-2-1.7L2.8 9.7c-1.2.5-1.2 2.2 0 2.7l4.6 1.8 1.7 5.3c.3 1 1.5 1.3 2.2.6l2.6-2.6 5 3.7c.9.7 2.2.2 2.4-1l2.7-15.6ZM8.1 13.7l10.8-7.2-8.5 8.6-.3 3.2-1.2-3.8-4.3-1.7 15.3-6.2-2.4 14.2-4.6-3.4-3.4 3.4.5-5.1-2-2Z"/>
               </svg>
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
