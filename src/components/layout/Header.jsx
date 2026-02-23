@@ -39,13 +39,24 @@ export default function Header() {
               target="_blank"
               rel="noreferrer"
               aria-label="Telegram"
-              className="focus-ring inline-flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white/90 ring-1 ring-black/10 shadow-sm transition-all duration-200 hover:bg-white hover:shadow-md"
+              className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/35 transition-all duration-200 active:translate-y-0.5"
+              style={{
+                background: '#229ED9',
+                boxShadow: '0 10px 24px rgba(17,24,39,0.12)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#1E8FC6';
+                e.currentTarget.style.boxShadow = '0 14px 30px rgba(17,24,39,0.14)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#229ED9';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(17,24,39,0.12)';
+              }}
             >
-              <img
-                src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAhElEQVRYR+2XQQ6AIAwEs///s9MHFQ6xwQdNLWQpLQXZxA0A0g0kQk7JmJj4Xw5Y6x6qfS8X9QJw3f2f6f0Y6Qk4gEwP9H4JmB7QvJx0Qn4xwKQz6y0x0u0hYlA9K6m2n6n0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0g0j8Y8A1qf0v0M9a4AAAAASUVORK5CYII="
-                alt="Telegram"
-                className="block h-8 w-8 object-contain"
-              />
+              {/* Telegram airplane icon */}
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2.5 10L17.5 3L10 17.5L8.25 11.25L2.5 10Z" fill="white" fillRule="evenodd" clipRule="evenodd"/>
+              </svg>
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>

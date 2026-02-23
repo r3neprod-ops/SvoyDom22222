@@ -5,7 +5,11 @@ const complexes = [
     subtitle: 'Современный комплекс рядом с парком и удобной городской инфраструктурой.',
     tags: ['рядом с парком', 'инфраструктура'],
     photos: ['renovaciya-1', 'renovaciya-2', 'renovaciya-3'],
-    backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fc3f1fe7a2743421ba728712045d95f5d)',
+    backgroundImages: [
+      'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F0e4111aa96984bd9bd979f391ebd84e5)',
+      'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Ff5a34dd3a87a4409af6490ca3fec9ad6)',
+      'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd5a682615f3e48778becc1c98d0d81e5)',
+    ],
   },
   {
     id: 'aura',
