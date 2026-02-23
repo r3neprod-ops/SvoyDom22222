@@ -30,7 +30,7 @@ export default function HomePage() {
       >
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
           <Container>
-            <div className="flex items-start gap-8 lg:gap-12">
+            <div className="flex items-stretch gap-8 lg:gap-12">
               {/* Hero Text Panel - localized backdrop only under content */}
               <div
                 className="reveal max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
@@ -63,21 +63,23 @@ export default function HomePage() {
                   <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
                 </div>
               </div>
+
+              {/* Mascot Slot - Right side zone */}
+              <div className="hidden lg:flex lg:flex-1 items-end justify-center relative">
+                <div className="relative w-80 h-full flex items-end justify-center">
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
+                    alt="Mascot"
+                    className="w-full h-auto object-contain"
+                  />
+                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-64 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full" />
+                </div>
+              </div>
             </div>
           </Container>
         </section>
 
         <LeadFormSection />
-
-        {/* Mascot Image - Positioned to span hero and lead form */}
-        <div className="hidden lg:block absolute bottom-0 right-0 w-96 h-auto z-10">
-          <img
-            src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
-            alt="Mascot"
-            className="w-full h-auto object-contain"
-          />
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-72 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full" />
-        </div>
       </div>
 
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
