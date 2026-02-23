@@ -28,6 +28,13 @@ export default function HomePage() {
           backgroundRepeat: 'no-repeat',
         }}
       >
+        {/* Mascot Layer */}
+        <img
+          src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F3f70e995611746bea47c466516299b99?format=webp&width=800&height=1200"
+          alt="Mascot"
+          className="absolute z-20"
+          style={{ width: '400px', height: 'auto' }}
+        />
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
           <Container className="flex flex-col gap-5">
             {/* Hero Text Panel - localized backdrop only under content */}
