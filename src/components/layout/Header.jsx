@@ -39,23 +39,30 @@ export default function Header() {
               target="_blank"
               rel="noreferrer"
               aria-label="Telegram"
-              className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/35 transition-all duration-200 active:translate-y-0.5"
+              className="focus-ring inline-flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-200 active:translate-y-0.5"
               style={{
-                background: '#229ED9',
-                boxShadow: '0 10px 24px rgba(17,24,39,0.12)',
+                background: '#FFFFFF',
+                border: '1px solid rgba(17,24,39,0.22)',
+                boxShadow: '0 10px 24px rgba(17,24,39,0.10)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#1E8FC6';
+                e.currentTarget.style.background = '#111827';
+                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.35)';
                 e.currentTarget.style.boxShadow = '0 14px 30px rgba(17,24,39,0.14)';
+                const icon = e.currentTarget.querySelector('svg path');
+                if (icon) icon.setAttribute('fill', '#FFFFFF');
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#229ED9';
-                e.currentTarget.style.boxShadow = '0 10px 24px rgba(17,24,39,0.12)';
+                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.22)';
+                e.currentTarget.style.boxShadow = '0 10px 24px rgba(17,24,39,0.10)';
+                const icon = e.currentTarget.querySelector('svg path');
+                if (icon) icon.setAttribute('fill', '#111827');
               }}
             >
               {/* Telegram airplane icon */}
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M2.5 10L17.5 3L10 17.5L8.25 11.25L2.5 10Z" fill="white" fillRule="evenodd" clipRule="evenodd"/>
+                <path d="M2.5 10L17.5 3L10 17.5L8.25 11.25L2.5 10Z" fill="#111827" fillRule="evenodd" clipRule="evenodd"/>
               </svg>
             </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
