@@ -65,22 +65,22 @@ export default function HomePage() {
               </div>
             </div>
           </Container>
-
-          {/* MascotLayer - Independent absolute layer */}
-          <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
-            {/* MascotSlot - Positioned zone for mascot */}
-            <div className="absolute flex items-end justify-center" style={{ right: '80px', top: '120px', width: '280px', height: '480px' }}>
-              <img
-                src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
-                alt="Mascot"
-                className="max-h-full w-auto object-contain"
-              />
-              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-60 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full" />
-            </div>
-          </div>
         </section>
 
         <LeadFormSection />
+
+        {/* MascotLayer - Independent absolute layer covering hero + lead form */}
+        <div className="hidden lg:block absolute inset-0 pointer-events-none z-5">
+          {/* MascotSlot - Positioned zone for mascot */}
+          <div className="absolute flex items-end justify-center" style={{ right: '80px', top: '120px', width: '300px', height: '600px' }}>
+            <img
+              src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2Fd43da0ecfaac4fbca51ec194e6dec6e5?format=webp&width=800&height=1200"
+              alt="Mascot"
+              className="h-full w-auto object-contain"
+            />
+            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-64 h-3 bg-gradient-to-r from-transparent via-black/20 to-transparent rounded-full" />
+          </div>
+        </div>
       </div>
 
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
