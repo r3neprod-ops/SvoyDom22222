@@ -4,9 +4,28 @@ export default function SlotBox({
   slotKey,
   fileHint,
   debug = false,
+  backgroundImage = null,
+  children = null,
 }) {
   if (!debug) {
-    return <div className={`slot-box ${className}`} aria-hidden="true" />;
+    const style = backgroundImage ? {
+      backgroundImage,
+      backgroundRepeat: 'no-repeat',
+      backgroundPosition: 'center',
+      backgroundSize: 'cover',
+    } : {};
+
+    // Use slot-box-with-image class when backgroundImage is provided
+    // This prevents the placeholder gradient from overlaying the actual image
+    const slotClass = backgroundImage
+      ? `slot-box-with-image ${className}`
+      : `slot-box ${className}`;
+
+    return (
+      <div className={slotClass} aria-hidden="true" style={style}>
+        {children}
+      </div>
+    );
   }
 
   return (

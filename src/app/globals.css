@@ -117,6 +117,12 @@ body {
     @apply h-full w-full rounded-2xl;
     background: linear-gradient(155deg, rgba(255, 255, 255, 0.4), rgba(242, 236, 226, 0.6));
   }
+
+  /* Slot box with actual image - no placeholder gradient overlay */
+  .slot-box-with-image {
+    @apply h-full w-full rounded-2xl;
+    background: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
