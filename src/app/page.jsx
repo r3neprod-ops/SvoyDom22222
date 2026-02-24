@@ -32,12 +32,10 @@ export default function HomePage() {
         <img
           src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F3f70e995611746bea47c466516299b99?format=webp&width=800&height=1200"
           alt="Mascot"
-          className="absolute z-20 reveal"
+          className="absolute right-4 top-12 z-20 hidden reveal lg:block xl:right-8"
           style={{
             width: '17%',
             height: 'auto',
-            left: '1556px',
-            top: '47px',
             maxWidth: '90%',
             minHeight: '8px',
             flexGrow: 1
