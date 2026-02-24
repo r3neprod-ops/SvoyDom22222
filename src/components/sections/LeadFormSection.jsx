@@ -60,6 +60,7 @@ const initialAnswers = {
   name: '',
   phone: '',
   telegram: '',
+  company: '',
 };
 
 export default function LeadFormSection() {
@@ -68,9 +69,10 @@ export default function LeadFormSection() {
   const [modalStep, setModalStep] = useState(1);
   const [embeddedStep, setEmbeddedStep] = useState(1);
   const [done, setDone] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [embeddedDone, setEmbeddedDone] = useState(false);
   const [amountError, setAmountError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const flag = sessionStorage.getItem('leadModalClosed');
@@ -150,10 +152,6 @@ export default function LeadFormSection() {
       return;
     }
     setAmountError('');
-    if (embeddedStep >= stepTitles.length) {
-      setEmbeddedDone(true);
-      return;
-    }
     setEmbeddedStep((prev) => Math.min(prev + 1, stepTitles.length));
   };
 
@@ -165,23 +163,41 @@ export default function LeadFormSection() {
   const resetEmbedded = () => {
     setEmbeddedDone(false);
     setEmbeddedStep(1);
+    setSubmitErrorMessage('');
   };
 
-  const submit = async (event) => {
-    event.preventDefault();
-    const payload = {
+  const buildPayload = () => ({
+    name: leadAnswers.name,
+    phone: leadAnswers.phone,
+    pageUrl: window.location.href,
+    createdAt: new Date().toISOString(),
+    company: leadAnswers.company,
+    answers: {
       propertyType: leadAnswers.propertyType,
       apartmentType: leadAnswers.apartmentType,
       timeline: leadAnswers.timeline,
       budgetPreset: leadAnswers.budgetPreset,
       budgetCustom: leadAnswers.budgetCustom,
       downPaymentType: leadAnswers.downPaymentType || null,
-      downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? Number(leadAnswers.downPaymentOwnAmount) : null,
-      name: leadAnswers.name,
-      phone: leadAnswers.phone,
+      downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? String(leadAnswers.downPaymentOwnAmount) : null,
       telegram: leadAnswers.telegram,
-    };
+    },
+    utm: {
+      source: new URLSearchParams(window.location.search).get('utm_source') || '',
+      medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
+      campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
+      term: new URLSearchParams(window.location.search).get('utm_term') || '',
+      content: new URLSearchParams(window.location.search).get('utm_content') || '',
+    },
+  });
 
+  const submitLead = async () => {
+    if (isSubmitting) return false;
+
+    const payload = buildPayload();
+
+    setIsSubmitting(true);
+    setSubmitErrorMessage('');
     try {
       const response = await fetch('/api/lead', {
         method: 'POST',
@@ -191,16 +207,33 @@ export default function LeadFormSection() {
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send lead');
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data?.ok === true) {
+        return true;
       }
 
-      setSubmitError(false);
-      setDone(true);
-    } catch {
-      setSubmitError(true);
-      setDone(true);
+      setSubmitErrorMessage(data?.message || 'Не удалось отправить. Попробуйте ещё раз.');
+      return false;
+    } catch (error) {
+      console.error('Lead submit failed', error);
+      setSubmitErrorMessage('Не удалось отправить. Попробуйте ещё раз.');
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const ok = await submitLead();
+    if (ok) setDone(true);
+  };
+
+  const submitEmbedded = async (event) => {
+    event.preventDefault();
+    const ok = await submitLead();
+    if (ok) setEmbeddedDone(true);
   };
 
   const showOwnAmount = leadAnswers.downPaymentType === 'matcap_plus_own' || leadAnswers.downPaymentType === 'own';
@@ -323,6 +356,15 @@ export default function LeadFormSection() {
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={leadAnswers.name} onChange={(e) => setValue('name', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={leadAnswers.phone} onChange={(e) => setValue('phone', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={leadAnswers.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
+        <input
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+          name="company"
+          value={leadAnswers.company}
+          onChange={(e) => setValue('company', e.target.value)}
+        />
       </div>
     );
   };
@@ -348,15 +390,22 @@ export default function LeadFormSection() {
                 <Button type="button" onClick={resetEmbedded}>Начать заново</Button>
               </div>
             ) : (
-              <>
+              <form onSubmit={submitEmbedded} className="space-y-6">
                 {renderStep(embeddedStep)}
                 <div className="mt-8 flex flex-wrap gap-3">
                   {embeddedStep > 1 && (
                     <Button type="button" variant="ghost" onClick={prevEmbedded}>Назад</Button>
                   )}
-                  <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
+                  {embeddedStep < stepTitles.length ? (
+                    <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
+                  ) : (
+                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim()}>
+                      {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
+                    </Button>
+                  )}
                 </div>
-              </>
+                {submitErrorMessage && <p className="text-sm text-[color:var(--muted)]">{submitErrorMessage}</p>}
+              </form>
             )}
           </Card>
         </Container>
@@ -380,7 +429,7 @@ export default function LeadFormSection() {
             {done ? (
               <div className="space-y-5">
                 <p className="text-[color:var(--muted)]">
-                  {submitError ? 'Не удалось отправить. Попробуйте ещё раз.' : 'Спасибо! Я свяжусь с вами и пришлю варианты.'}
+                  Спасибо! Я свяжусь с вами и пришлю варианты.
                 </p>
                 <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button onClick={closeModal}>Закрыть</Button>
@@ -396,9 +445,12 @@ export default function LeadFormSection() {
                   {modalStep < stepTitles.length ? (
                     <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>Далее</Button>
                   ) : (
-                    <Button type="submit" disabled={!leadAnswers.name.trim() || !leadAnswers.phone.trim()}>Получить консультацию</Button>
+                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim()}>
+                      {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
+                    </Button>
                   )}
                 </div>
+                {submitErrorMessage && <p className="text-sm text-[color:var(--muted)]">{submitErrorMessage}</p>}
               </form>
             )}
           </div>
