@@ -76,3 +76,18 @@ npm run dev
 - `complex-renovaciya-photo-1.jpg`
 - `complex-renovaciya-photo-2.jpg`
 - `complex-renovaciya-photo-3.jpg`
+
+## Environment Variables (Vercel)
+
+Добавьте переменные в **Vercel → Settings → Environment Variables**:
+
+- `TELEGRAM_BOT_TOKEN`
+
+Локально можно скопировать `.env.example` в `.env.local`.
+
+### Проверка API лидов
+
+```bash
+curl -X POST http://localhost:3000/api/lead -H "Content-Type: application/json" -d '{"name":"Тест","phone":"+79990001122","pageUrl":"http://localhost:3000"}'
+```
+
