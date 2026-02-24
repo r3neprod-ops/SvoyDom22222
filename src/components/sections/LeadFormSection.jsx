@@ -60,6 +60,7 @@ const initialAnswers = {
   name: '',
   phone: '',
   telegram: '',
+  company: '',
 };
 
 export default function LeadFormSection() {
@@ -71,6 +72,7 @@ export default function LeadFormSection() {
   const [submitError, setSubmitError] = useState(false);
   const [embeddedDone, setEmbeddedDone] = useState(false);
   const [amountError, setAmountError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const flag = sessionStorage.getItem('leadModalClosed');
@@ -169,19 +171,34 @@ export default function LeadFormSection() {
 
   const submit = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+
     const payload = {
-      propertyType: leadAnswers.propertyType,
-      apartmentType: leadAnswers.apartmentType,
-      timeline: leadAnswers.timeline,
-      budgetPreset: leadAnswers.budgetPreset,
-      budgetCustom: leadAnswers.budgetCustom,
-      downPaymentType: leadAnswers.downPaymentType || null,
-      downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? Number(leadAnswers.downPaymentOwnAmount) : null,
       name: leadAnswers.name,
       phone: leadAnswers.phone,
-      telegram: leadAnswers.telegram,
+      pageUrl: window.location.href,
+      createdAt: new Date().toISOString(),
+      company: leadAnswers.company,
+      answers: {
+        propertyType: leadAnswers.propertyType,
+        apartmentType: leadAnswers.apartmentType,
+        timeline: leadAnswers.timeline,
+        budgetPreset: leadAnswers.budgetPreset,
+        budgetCustom: leadAnswers.budgetCustom,
+        downPaymentType: leadAnswers.downPaymentType || null,
+        downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? String(leadAnswers.downPaymentOwnAmount) : null,
+        telegram: leadAnswers.telegram,
+      },
+      utm: {
+        source: new URLSearchParams(window.location.search).get('utm_source') || '',
+        medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
+        campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
+        term: new URLSearchParams(window.location.search).get('utm_term') || '',
+        content: new URLSearchParams(window.location.search).get('utm_content') || '',
+      },
     };
 
+    setIsSubmitting(true);
     try {
       const response = await fetch('/api/lead', {
         method: 'POST',
@@ -200,6 +217,8 @@ export default function LeadFormSection() {
     } catch {
       setSubmitError(true);
       setDone(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -323,6 +342,15 @@ export default function LeadFormSection() {
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={leadAnswers.name} onChange={(e) => setValue('name', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={leadAnswers.phone} onChange={(e) => setValue('phone', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={leadAnswers.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
+        <input
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="hidden"
+          name="company"
+          value={leadAnswers.company}
+          onChange={(e) => setValue('company', e.target.value)}
+        />
       </div>
     );
   };
@@ -396,7 +424,9 @@ export default function LeadFormSection() {
                   {modalStep < stepTitles.length ? (
                     <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>Далее</Button>
                   ) : (
-                    <Button type="submit" disabled={!leadAnswers.name.trim() || !leadAnswers.phone.trim()}>Получить консультацию</Button>
+                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim()}>
+                      {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
+                    </Button>
                   )}
                 </div>
               </form>
