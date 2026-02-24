@@ -82,7 +82,6 @@ npm run dev
 Добавьте переменные в **Vercel → Settings → Environment Variables**:
 
 - `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
 
 Локально можно скопировать `.env.example` в `.env.local`.
 

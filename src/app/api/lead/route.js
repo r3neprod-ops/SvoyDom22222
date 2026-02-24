@@ -1,4 +1,5 @@
 const REQUEST_WINDOW_MS = 60 * 1000;
+const TELEGRAM_CHAT_ID = '612622372';
 const ipRequestStore = new Map();
 
 function escapeHtml(value) {
@@ -23,15 +24,11 @@ function isRateLimited(ip) {
   const now = Date.now();
 
   for (const [key, expiresAt] of ipRequestStore.entries()) {
-    if (expiresAt <= now) {
-      ipRequestStore.delete(key);
-    }
+    if (expiresAt <= now) ipRequestStore.delete(key);
   }
 
   const expiresAt = ipRequestStore.get(ip);
-  if (expiresAt && expiresAt > now) {
-    return true;
-  }
+  if (expiresAt && expiresAt > now) return true;
 
   ipRequestStore.set(ip, now + REQUEST_WINDOW_MS);
   return false;
@@ -59,18 +56,20 @@ function buildTelegramText(payload) {
     }
   }
 
+  if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
+  lines.push(`Время: ${escapeHtml(payload.createdAt || new Date().toISOString())}`);
+
   const utm = asRecord(payload.utm);
   if (Object.keys(utm).length > 0) {
-    lines.push('');
-    lines.push('<b>UTM:</b>');
-    for (const [key, value] of Object.entries(utm)) {
-      if (!value) continue;
-      lines.push(`${escapeHtml(key)}: ${escapeHtml(value)}`);
+    const nonEmptyUtm = Object.entries(utm).filter(([, value]) => Boolean(value));
+    if (nonEmptyUtm.length > 0) {
+      lines.push('');
+      lines.push('<b>UTM:</b>');
+      for (const [key, value] of nonEmptyUtm) {
+        lines.push(`${escapeHtml(key)}: ${escapeHtml(value)}`);
+      }
     }
   }
-
-  if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
-  if (payload.createdAt) lines.push(`Создано: ${escapeHtml(payload.createdAt)}`);
 
   return lines.join('\n');
 }
@@ -98,10 +97,8 @@ export async function POST(request) {
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-
-    if (!botToken || !chatId) {
-      throw new Error('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env variable.');
+    if (!botToken) {
+      throw new Error('Missing TELEGRAM_BOT_TOKEN env variable.');
     }
 
     const safePayload = {
@@ -118,7 +115,7 @@ export async function POST(request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chat_id: chatId,
+        chat_id: TELEGRAM_CHAT_ID,
         text: buildTelegramText(safePayload),
         parse_mode: 'HTML',
         disable_web_page_preview: true,
