@@ -98,7 +98,7 @@ export async function POST(request) {
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
-      throw new Error('Missing TELEGRAM_BOT_TOKEN env variable.');
+      return Response.json({ ok: false, error: 'Missing TELEGRAM_BOT_TOKEN' }, { status: 500 });
     }
 
     const safePayload = {
@@ -125,7 +125,7 @@ export async function POST(request) {
     if (!telegramResponse.ok) {
       const telegramErrorText = await telegramResponse.text();
       console.error('Telegram API error:', telegramErrorText);
-      return Response.json({ ok: false, error: 'Telegram API request failed' }, { status: 500 });
+      return Response.json({ ok: false, error: 'Telegram error', telegram: telegramErrorText }, { status: 500 });
     }
 
     return Response.json({ ok: true });

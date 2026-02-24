@@ -152,10 +152,6 @@ export default function LeadFormSection() {
       return;
     }
     setAmountError('');
-    if (embeddedStep >= stepTitles.length) {
-      setEmbeddedDone(true);
-      return;
-    }
     setEmbeddedStep((prev) => Math.min(prev + 1, stepTitles.length));
   };
 
@@ -169,34 +165,36 @@ export default function LeadFormSection() {
     setEmbeddedStep(1);
   };
 
-  const submit = async (event) => {
-    event.preventDefault();
-    if (isSubmitting) return;
+  const buildPayload = () => ({
+    name: leadAnswers.name,
+    phone: leadAnswers.phone,
+    pageUrl: window.location.href,
+    createdAt: new Date().toISOString(),
+    company: leadAnswers.company,
+    answers: {
+      propertyType: leadAnswers.propertyType,
+      apartmentType: leadAnswers.apartmentType,
+      timeline: leadAnswers.timeline,
+      budgetPreset: leadAnswers.budgetPreset,
+      budgetCustom: leadAnswers.budgetCustom,
+      downPaymentType: leadAnswers.downPaymentType || null,
+      downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? String(leadAnswers.downPaymentOwnAmount) : null,
+      telegram: leadAnswers.telegram,
+    },
+    utm: {
+      source: new URLSearchParams(window.location.search).get('utm_source') || '',
+      medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
+      campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
+      term: new URLSearchParams(window.location.search).get('utm_term') || '',
+      content: new URLSearchParams(window.location.search).get('utm_content') || '',
+    },
+  });
 
-    const payload = {
-      name: leadAnswers.name,
-      phone: leadAnswers.phone,
-      pageUrl: window.location.href,
-      createdAt: new Date().toISOString(),
-      company: leadAnswers.company,
-      answers: {
-        propertyType: leadAnswers.propertyType,
-        apartmentType: leadAnswers.apartmentType,
-        timeline: leadAnswers.timeline,
-        budgetPreset: leadAnswers.budgetPreset,
-        budgetCustom: leadAnswers.budgetCustom,
-        downPaymentType: leadAnswers.downPaymentType || null,
-        downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? String(leadAnswers.downPaymentOwnAmount) : null,
-        telegram: leadAnswers.telegram,
-      },
-      utm: {
-        source: new URLSearchParams(window.location.search).get('utm_source') || '',
-        medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
-        campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
-        term: new URLSearchParams(window.location.search).get('utm_term') || '',
-        content: new URLSearchParams(window.location.search).get('utm_content') || '',
-      },
-    };
+  const submitLead = async () => {
+    if (isSubmitting) return false;
+
+    const payload = buildPayload();
+    console.log('SUBMIT payload', payload);
 
     setIsSubmitting(true);
     try {
@@ -208,18 +206,41 @@ export default function LeadFormSection() {
         body: JSON.stringify(payload),
       });
 
+      let responseJson = null;
+      try {
+        responseJson = await response.json();
+      } catch {
+        responseJson = null;
+      }
+
+      console.log('API response', response.status, responseJson);
+
       if (!response.ok) {
-        throw new Error('Failed to send lead');
+        setSubmitError(true);
+        return false;
       }
 
       setSubmitError(false);
-      setDone(true);
-    } catch {
+      return true;
+    } catch (error) {
+      console.error('Lead submit failed', error);
       setSubmitError(true);
-      setDone(true);
+      return false;
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const submit = async (event) => {
+    event.preventDefault();
+    const ok = await submitLead();
+    if (ok) setDone(true);
+  };
+
+  const submitEmbedded = async (event) => {
+    event.preventDefault();
+    const ok = await submitLead();
+    if (ok) setEmbeddedDone(true);
   };
 
   const showOwnAmount = leadAnswers.downPaymentType === 'matcap_plus_own' || leadAnswers.downPaymentType === 'own';
@@ -376,15 +397,21 @@ export default function LeadFormSection() {
                 <Button type="button" onClick={resetEmbedded}>Начать заново</Button>
               </div>
             ) : (
-              <>
+              <form onSubmit={submitEmbedded} className="space-y-6">
                 {renderStep(embeddedStep)}
                 <div className="mt-8 flex flex-wrap gap-3">
                   {embeddedStep > 1 && (
                     <Button type="button" variant="ghost" onClick={prevEmbedded}>Назад</Button>
                   )}
-                  <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
+                  {embeddedStep < stepTitles.length ? (
+                    <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
+                  ) : (
+                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim()}>
+                      {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
+                    </Button>
+                  )}
                 </div>
-              </>
+              </form>
             )}
           </Card>
         </Container>
