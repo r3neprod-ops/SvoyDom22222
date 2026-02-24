@@ -2,12 +2,82 @@ const REQUEST_WINDOW_MS = 60 * 1000;
 const TELEGRAM_CHAT_ID = '612622372';
 const ipRequestStore = new Map();
 
+const PROPERTY_TYPE_LABELS = {
+  apartment: 'Новостройка (квартира)',
+  apartment_newbuild: 'Новостройка (квартира)',
+  house: 'Частный дом',
+  land_house: 'Участок + дом',
+  'land+house': 'Участок + дом',
+  plot_house: 'Участок + дом',
+  consultation: 'Нужна консультация',
+};
+
+const APARTMENT_TYPE_LABELS = {
+  studio_20_30: 'Студия (20–30 м²)',
+  '1k_40_55': '1-комнатная (40–55 м²)',
+  '2k_55_65': '2-комнатная (55–65 м²)',
+  '3k_65_plus': '3+ комнат (65+ м²)',
+  dont_know: 'Пока не знаю',
+};
+
+const TIMELINE_LABELS = {
+  urgent_1_2w: 'Срочно (1–2 недели)',
+  '1_2m': 'В течение 1–2 месяцев',
+  '3_6m': 'В течение 3–6 месяцев',
+  no_hurry: 'Не спешу',
+  just_looking: 'Просто прицениваюсь',
+};
+
+const DOWN_PAYMENT_LABELS = {
+  matcap: 'Маткапитал',
+  own: 'Свои средства',
+  matcap_plus_own: 'Маткапитал + свои средства',
+};
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
+}
+
+function humanizeFallback(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  return text.replaceAll('_', ' ');
+}
+
+function formatBudget(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+
+  const mapped = {
+    '4_6': '4–6 млн ₽',
+    '6_8': '6–8 млн ₽',
+    '8_10': '8–10 млн ₽',
+    '10_plus': '10+ млн ₽',
+    custom: 'Свой вариант',
+  };
+
+  if (mapped[raw]) return mapped[raw];
+
+  const normalized = raw.replace(',', '.');
+  if (/^\d+(?:\.\d+)?_\d+(?:\.\d+)?$/.test(normalized)) {
+    const [from, to] = normalized.split('_');
+    return `${from}–${to} млн ₽`;
+  }
+  if (/^\d+(?:\.\d+)?$/.test(normalized)) {
+    return `${normalized} млн ₽`;
+  }
+
+  return humanizeFallback(raw);
+}
+
+function mappedAnswer(value, map) {
+  if (value === null || value === undefined || value === '') return '';
+  const normalized = String(value).trim();
+  return map[normalized] || humanizeFallback(normalized);
 }
 
 function getClientIp(request) {
@@ -35,25 +105,30 @@ function asRecord(value) {
 }
 
 function buildTelegramText(payload) {
-  const lines = ['<b>Новая заявка</b>'];
+  const lines = ['🆕 <b>Новая заявка</b>'];
 
   lines.push(`Имя: ${escapeHtml(payload.name || '—')}`);
   lines.push(`Телефон: ${escapeHtml(payload.phone || '—')}`);
 
   const answers = asRecord(payload.answers);
-  if (Object.keys(answers).length > 0) {
+  const formattedAnswers = [
+    ['Что вы хотите выбрать?', mappedAnswer(answers.propertyType, PROPERTY_TYPE_LABELS)],
+    ['Какой вариант вы рассматриваете?', mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)],
+    ['Насколько срочно нужна консультация?', mappedAnswer(answers.timeline, TIMELINE_LABELS)],
+    ['На какой бюджет ориентируетесь?', formatBudget(answers.budgetPreset) || humanizeFallback(answers.budgetCustom)],
+    ['Первоначальный взнос:', mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)],
+  ].filter(([, answer]) => Boolean(answer));
+
+  if (formattedAnswers.length > 0) {
     lines.push('');
     lines.push('<b>Ответы:</b>');
-    for (const [key, value] of Object.entries(answers)) {
-      if (value === null || value === undefined || value === '') continue;
-      lines.push(`${escapeHtml(key)}: ${escapeHtml(value)}`);
+    for (const [question, answer] of formattedAnswers) {
+      lines.push(`<b>${escapeHtml(question)}</b> ${escapeHtml(answer)}`);
     }
   }
 
   if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
   lines.push(`Время: ${escapeHtml(payload.createdAt || new Date().toISOString())}`);
-
-  if (payload.message) lines.push(`Сообщение: ${escapeHtml(payload.message)}`);
 
   return lines.join('\n');
 }
