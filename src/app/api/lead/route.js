@@ -19,15 +19,6 @@ const APARTMENT_TYPE_LABELS = {
   '3k_65_plus': '3+ комнат (65+ м²)',
   dont_know: 'Пока не знаю',
 };
-
-const TIMELINE_LABELS = {
-  urgent_1_2w: 'Срочно (1–2 недели)',
-  '1_2m': 'В течение 1–2 месяцев',
-  '3_6m': 'В течение 3–6 месяцев',
-  no_hurry: 'Не спешу',
-  just_looking: 'Просто прицениваюсь',
-};
-
 const DOWN_PAYMENT_LABELS = {
   matcap: 'Маткапитал',
   own: 'Свои средства',
@@ -121,7 +112,6 @@ function buildTelegramText(payload) {
   const formattedAnswers = [
     ['Что вы хотите выбрать?', mappedAnswer(answers.propertyType, PROPERTY_TYPE_LABELS)],
     ['Какой вариант вы рассматриваете?', mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)],
-    ['Насколько срочно нужна консультация?', mappedAnswer(answers.timeline, TIMELINE_LABELS)],
     ['На какой бюджет ориентируетесь?', formatBudget(answers.budgetPreset) || humanizeFallback(answers.budgetCustom)],
     ['Первоначальный взнос:', mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)],
   ].filter(([, answer]) => Boolean(answer));

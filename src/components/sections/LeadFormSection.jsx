@@ -8,7 +8,6 @@ import Container from '@/components/ui/Container';
 const stepTitles = [
   'Что подбираем?',
   'Планировка',
-  'Срок',
   'Бюджет',
   'Первоначальный взнос',
   'Контакты',
@@ -28,13 +27,6 @@ const apartmentOptionsBase = [
   { label: '3+ комнат 65+ м²', value: '3k_65_plus' },
 ];
 
-const timelineOptions = [
-  { label: 'Срочно (1–2 недели)', value: 'urgent_1_2w' },
-  { label: 'В течение 1–2 месяцев', value: '1_2m' },
-  { label: 'В течение 3–6 месяцев', value: '3_6m' },
-  { label: 'Просто прицениваюсь', value: 'just_looking' },
-];
-
 const budgetOptions = [
   { label: '4–6 млн', value: '4_6' },
   { label: '6–8 млн', value: '6_8' },
@@ -52,7 +44,6 @@ const downPaymentOptions = [
 const initialAnswers = {
   propertyType: '',
   apartmentType: '',
-  timeline: '',
   budgetPreset: '',
   budgetCustom: '',
   downPaymentType: '',
@@ -123,8 +114,7 @@ export default function LeadFormSection() {
   const canProceed = (step) => {
     if (step === 1) return Boolean(leadAnswers.propertyType);
     if (step === 2) return Boolean(leadAnswers.apartmentType);
-    if (step === 3) return Boolean(leadAnswers.timeline);
-    if (step === 4) {
+    if (step === 3) {
       if (!leadAnswers.budgetPreset) return false;
       if (leadAnswers.budgetPreset === 'custom') return Boolean(leadAnswers.budgetCustom.trim());
       return true;
@@ -175,7 +165,6 @@ export default function LeadFormSection() {
     answers: {
       propertyType: leadAnswers.propertyType,
       apartmentType: leadAnswers.apartmentType,
-      timeline: leadAnswers.timeline,
       budgetPreset: leadAnswers.budgetPreset,
       budgetCustom: leadAnswers.budgetCustom,
       downPaymentType: leadAnswers.downPaymentType || null,
@@ -274,22 +263,6 @@ export default function LeadFormSection() {
     if (step === 3) {
       return (
         <div className="space-y-3">
-          <p className="text-sm font-medium">Насколько срочно нужна консультация?</p>
-          <InlineChoice
-            options={timelineOptions.map((item) => item.label)}
-            value={timelineOptions.find((item) => item.value === leadAnswers.timeline)?.label || ''}
-            onSelect={(label) => {
-              const option = timelineOptions.find((item) => item.label === label);
-              if (option) setValue('timeline', option.value);
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (step === 4) {
-      return (
-        <div className="space-y-3">
           <p className="text-sm font-medium">На какой бюджет ориентируетесь?</p>
           <InlineChoice
             options={budgetOptions.map((item) => item.label)}
@@ -314,7 +287,7 @@ export default function LeadFormSection() {
       );
     }
 
-    if (step === 5) {
+    if (step === 4) {
       return (
         <div className="space-y-4">
           <InlineChoice
