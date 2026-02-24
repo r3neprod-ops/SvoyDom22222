@@ -16,10 +16,6 @@ function getClientIp(request) {
   return request.headers.get('x-real-ip') || 'unknown';
 }
 
-function cleanPhone(phone) {
-  return String(phone || '').replace(/[^\d+]/g, '').trim();
-}
-
 function isRateLimited(ip) {
   const now = Date.now();
 
@@ -44,8 +40,6 @@ function buildTelegramText(payload) {
   lines.push(`Имя: ${escapeHtml(payload.name || '—')}`);
   lines.push(`Телефон: ${escapeHtml(payload.phone || '—')}`);
 
-  if (payload.message) lines.push(`Сообщение: ${escapeHtml(payload.message)}`);
-
   const answers = asRecord(payload.answers);
   if (Object.keys(answers).length > 0) {
     lines.push('');
@@ -59,19 +53,51 @@ function buildTelegramText(payload) {
   if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
   lines.push(`Время: ${escapeHtml(payload.createdAt || new Date().toISOString())}`);
 
-  const utm = asRecord(payload.utm);
-  if (Object.keys(utm).length > 0) {
-    const nonEmptyUtm = Object.entries(utm).filter(([, value]) => Boolean(value));
-    if (nonEmptyUtm.length > 0) {
-      lines.push('');
-      lines.push('<b>UTM:</b>');
-      for (const [key, value] of nonEmptyUtm) {
-        lines.push(`${escapeHtml(key)}: ${escapeHtml(value)}`);
-      }
-    }
-  }
+  if (payload.message) lines.push(`Сообщение: ${escapeHtml(payload.message)}`);
 
   return lines.join('\n');
+}
+
+function validatePhone(rawPhone) {
+  const phone = String(rawPhone ?? '').trim();
+  if (!phone) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        ok: false,
+        code: 'MISSING_PHONE',
+        message: 'Укажите номер телефона (можно с +7).',
+      },
+    };
+  }
+
+  if (/\p{L}/u.test(phone)) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        ok: false,
+        code: 'INVALID_PHONE',
+        message: 'Некорректный номер. Используйте цифры, +, пробелы, скобки или дефисы.',
+      },
+    };
+  }
+
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length < 10) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        ok: false,
+        code: 'INVALID_PHONE',
+        message: 'Номер слишком короткий. Пример: +7 999 000-00-00',
+      },
+    };
+  }
+
+  return { ok: true, phone, phoneDigits };
 }
 
 export async function POST(request) {
@@ -79,7 +105,7 @@ export async function POST(request) {
     const payload = await request.json();
 
     if (!payload || typeof payload !== 'object') {
-      return Response.json({ ok: false, error: 'Empty request body' }, { status: 400 });
+      return Response.json({ ok: false, code: 'BAD_REQUEST', message: 'Пустой запрос.' }, { status: 400 });
     }
 
     if (payload.company && String(payload.company).trim()) {
@@ -88,25 +114,23 @@ export async function POST(request) {
 
     const ip = getClientIp(request);
     if (isRateLimited(ip)) {
-      return Response.json({ ok: false, error: 'Too many requests' }, { status: 429 });
+      return Response.json({ ok: false, code: 'RATE_LIMIT', message: 'Слишком много запросов. Попробуйте чуть позже.' }, { status: 429 });
     }
 
-    const phone = cleanPhone(payload.phone);
-    if (phone.replace(/\D/g, '').length < 8) {
-      return Response.json({ ok: false, error: 'Invalid phone' }, { status: 400 });
+    const phoneValidation = validatePhone(payload.phone);
+    if (!phoneValidation.ok) {
+      return Response.json(phoneValidation.body, { status: phoneValidation.status });
     }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
-      return Response.json({ ok: false, error: 'Missing TELEGRAM_BOT_TOKEN' }, { status: 500 });
+      return Response.json({ ok: false, code: 'MISSING_TELEGRAM_TOKEN', message: 'Missing TELEGRAM_BOT_TOKEN' }, { status: 500 });
     }
 
     const safePayload = {
       ...payload,
-      phone,
-      name: payload.name || '',
+      phone: phoneValidation.phone,
       answers: asRecord(payload.answers),
-      utm: asRecord(payload.utm),
     };
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
@@ -123,16 +147,33 @@ export async function POST(request) {
     });
 
     if (!telegramResponse.ok) {
-      const telegramErrorText = await telegramResponse.text();
-      console.error('Telegram API error:', telegramErrorText);
-      return Response.json({ ok: false, error: 'Telegram error', telegram: telegramErrorText }, { status: 500 });
+      let telegramBody = null;
+      try {
+        telegramBody = await telegramResponse.json();
+      } catch {
+        telegramBody = { text: await telegramResponse.text() };
+      }
+      console.error('Telegram API error:', telegramBody);
+      return Response.json(
+        {
+          ok: false,
+          code: 'TELEGRAM_ERROR',
+          message: 'Не удалось отправить. Попробуйте ещё раз.',
+          telegram: telegramBody,
+        },
+        { status: 500 }
+      );
     }
 
     return Response.json({ ok: true });
   } catch (error) {
     console.error('Lead API error:', error);
     return Response.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        ok: false,
+        code: 'SERVER_ERROR',
+        message: 'Не удалось отправить. Попробуйте ещё раз.',
+      },
       { status: 500 }
     );
   }

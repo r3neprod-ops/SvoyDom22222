@@ -69,7 +69,7 @@ export default function LeadFormSection() {
   const [modalStep, setModalStep] = useState(1);
   const [embeddedStep, setEmbeddedStep] = useState(1);
   const [done, setDone] = useState(false);
-  const [submitError, setSubmitError] = useState(false);
+  const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [embeddedDone, setEmbeddedDone] = useState(false);
   const [amountError, setAmountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,6 +163,7 @@ export default function LeadFormSection() {
   const resetEmbedded = () => {
     setEmbeddedDone(false);
     setEmbeddedStep(1);
+    setSubmitErrorMessage('');
   };
 
   const buildPayload = () => ({
@@ -194,9 +195,9 @@ export default function LeadFormSection() {
     if (isSubmitting) return false;
 
     const payload = buildPayload();
-    console.log('SUBMIT payload', payload);
 
     setIsSubmitting(true);
+    setSubmitErrorMessage('');
     try {
       const response = await fetch('/api/lead', {
         method: 'POST',
@@ -206,25 +207,17 @@ export default function LeadFormSection() {
         body: JSON.stringify(payload),
       });
 
-      let responseJson = null;
-      try {
-        responseJson = await response.json();
-      } catch {
-        responseJson = null;
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok && data?.ok === true) {
+        return true;
       }
 
-      console.log('API response', response.status, responseJson);
-
-      if (!response.ok) {
-        setSubmitError(true);
-        return false;
-      }
-
-      setSubmitError(false);
-      return true;
+      setSubmitErrorMessage(data?.message || 'Не удалось отправить. Попробуйте ещё раз.');
+      return false;
     } catch (error) {
       console.error('Lead submit failed', error);
-      setSubmitError(true);
+      setSubmitErrorMessage('Не удалось отправить. Попробуйте ещё раз.');
       return false;
     } finally {
       setIsSubmitting(false);
@@ -411,6 +404,7 @@ export default function LeadFormSection() {
                     </Button>
                   )}
                 </div>
+                {submitErrorMessage && <p className="text-sm text-[color:var(--muted)]">{submitErrorMessage}</p>}
               </form>
             )}
           </Card>
@@ -435,7 +429,7 @@ export default function LeadFormSection() {
             {done ? (
               <div className="space-y-5">
                 <p className="text-[color:var(--muted)]">
-                  {submitError ? 'Не удалось отправить. Попробуйте ещё раз.' : 'Спасибо! Я свяжусь с вами и пришлю варианты.'}
+                  Спасибо! Я свяжусь с вами и пришлю варианты.
                 </p>
                 <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button onClick={closeModal}>Закрыть</Button>
@@ -456,6 +450,7 @@ export default function LeadFormSection() {
                     </Button>
                   )}
                 </div>
+                {submitErrorMessage && <p className="text-sm text-[color:var(--muted)]">{submitErrorMessage}</p>}
               </form>
             )}
           </div>
