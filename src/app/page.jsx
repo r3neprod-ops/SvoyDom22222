@@ -28,23 +28,8 @@ export default function HomePage() {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        {/* Mascot Layer */}
-        <img
-          src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F3f70e995611746bea47c466516299b99?format=webp&width=800&height=1200"
-          alt="Mascot"
-          className="absolute z-20 reveal"
-          style={{
-            width: '17%',
-            height: 'auto',
-            left: '1556px',
-            top: '47px',
-            maxWidth: '90%',
-            minHeight: '8px',
-            flexGrow: 1
-          }}
-        />
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
-          <Container className="flex flex-col gap-5">
+          <Container className="relative flex flex-col gap-5">
             {/* Hero Text Panel - localized backdrop only under content */}
             <div
               className="reveal max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
@@ -77,6 +62,7 @@ export default function HomePage() {
                 <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
               </div>
             </div>
+
           </Container>
         </section>
 
