@@ -1,6 +1,6 @@
-const REQUEST_WINDOW_MS = 60 * 1000;
+const DEDUPE_WINDOW_MS = 30 * 1000;
 const TELEGRAM_CHAT_ID = '612622372';
-const ipRequestStore = new Map();
+const recentLeadStore = new Map();
 
 const PROPERTY_TYPE_LABELS = {
   apartment: 'Новостройка (квартира)',
@@ -80,23 +80,30 @@ function mappedAnswer(value, map) {
   return map[normalized] || humanizeFallback(normalized);
 }
 
-function getClientIp(request) {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return request.headers.get('x-real-ip') || 'unknown';
+function makeDedupKey(phoneDigits, answers) {
+  const normalizedAnswers = Object.keys(answers || {})
+    .sort()
+    .reduce((acc, key) => {
+      const value = answers[key];
+      if (value === null || value === undefined || value === '') return acc;
+      acc[key] = String(value);
+      return acc;
+    }, {});
+
+  return `${phoneDigits}|${JSON.stringify(normalizedAnswers)}`;
 }
 
-function isRateLimited(ip) {
+function isDuplicateLead(key) {
   const now = Date.now();
 
-  for (const [key, expiresAt] of ipRequestStore.entries()) {
-    if (expiresAt <= now) ipRequestStore.delete(key);
+  for (const [storedKey, expiresAt] of recentLeadStore.entries()) {
+    if (expiresAt <= now) recentLeadStore.delete(storedKey);
   }
 
-  const expiresAt = ipRequestStore.get(ip);
+  const expiresAt = recentLeadStore.get(key);
   if (expiresAt && expiresAt > now) return true;
 
-  ipRequestStore.set(ip, now + REQUEST_WINDOW_MS);
+  recentLeadStore.set(key, now + DEDUPE_WINDOW_MS);
   return false;
 }
 
@@ -187,11 +194,6 @@ export async function POST(request) {
       return Response.json({ ok: true });
     }
 
-    const ip = getClientIp(request);
-    if (isRateLimited(ip)) {
-      return Response.json({ ok: false, code: 'RATE_LIMIT', message: 'Слишком много запросов. Попробуйте чуть позже.' }, { status: 429 });
-    }
-
     const phoneValidation = validatePhone(payload.phone);
     if (!phoneValidation.ok) {
       return Response.json(phoneValidation.body, { status: phoneValidation.status });
@@ -207,6 +209,11 @@ export async function POST(request) {
       phone: phoneValidation.phone,
       answers: asRecord(payload.answers),
     };
+
+    const dedupeKey = makeDedupKey(phoneValidation.phoneDigits, safePayload.answers);
+    if (isDuplicateLead(dedupeKey)) {
+      return Response.json({ ok: true, deduped: true });
+    }
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
