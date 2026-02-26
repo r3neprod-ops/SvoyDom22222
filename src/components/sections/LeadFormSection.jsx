@@ -199,6 +199,10 @@ export default function LeadFormSection() {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok && data?.ok === true) {
+        if (typeof window !== 'undefined' && typeof window.ym === 'function') {
+          window.ym(107023721, 'reachGoal', 'lead_submit');
+        }
+
         return true;
       }
 
