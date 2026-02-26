@@ -34,32 +34,30 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            {/* Telegram Button - Premium Black & White */}
+            {/* Telegram Button - Minimal Style */}
             <a
               href={brand.telegramUrl}
               target="_blank"
               rel="noreferrer"
               aria-label="Telegram"
-              className="inline-flex items-center justify-center rounded-full transition-all duration-150 active:translate-y-0.5"
+              className="inline-flex items-center justify-center rounded-full transition-all duration-200 active:translate-y-0.5"
               style={{
                 width: '40px',
                 height: '40px',
-                background: '#FFFFFF',
-                border: '1px solid rgba(17,24,39,0.22)',
-                boxShadow: '0 10px 24px rgba(17,24,39,0.10)',
-                color: '#111827',
+                background: 'rgba(17,24,39,0.04)',
+                border: '1px solid rgba(17,24,39,0.08)',
+                boxShadow: 'none',
+                color: 'rgba(17,24,39,0.6)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#111827';
-                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.35)';
-                e.currentTarget.style.boxShadow = '0 14px 30px rgba(17,24,39,0.14)';
-                e.currentTarget.style.color = '#FFFFFF';
+                e.currentTarget.style.background = 'rgba(17,24,39,0.08)';
+                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.12)';
+                e.currentTarget.style.color = 'rgba(17,24,39,0.8)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.22)';
-                e.currentTarget.style.boxShadow = '0 10px 24px rgba(17,24,39,0.10)';
-                e.currentTarget.style.color = '#111827';
+                e.currentTarget.style.background = 'rgba(17,24,39,0.04)';
+                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.08)';
+                e.currentTarget.style.color = 'rgba(17,24,39,0.6)';
               }}
             >
               <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
