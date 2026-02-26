@@ -34,38 +34,24 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            {/* Telegram Button - Premium Black & White */}
+            {/* Telegram Button */}
             <a
               href={brand.telegramUrl}
               target="_blank"
               rel="noreferrer"
               aria-label="Telegram"
-              className="inline-flex items-center justify-center rounded-full transition-all duration-150 active:translate-y-0.5"
+              className="inline-flex items-center justify-center rounded-full transition-transform duration-150 hover:scale-110 active:scale-95"
               style={{
                 width: '40px',
                 height: '40px',
                 background: '#FFFFFF',
-                border: '1px solid rgba(17,24,39,0.22)',
-                boxShadow: '0 10px 24px rgba(17,24,39,0.10)',
-                color: '#111827',
+                backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F83e6757d058c4796b17a2841786c5053?format=webp)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                border: 'none',
+                boxShadow: '0 2px 8px rgba(17,24,39,0.08)',
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#111827';
-                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.35)';
-                e.currentTarget.style.boxShadow = '0 14px 30px rgba(17,24,39,0.14)';
-                e.currentTarget.style.color = '#FFFFFF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.borderColor = 'rgba(17,24,39,0.22)';
-                e.currentTarget.style.boxShadow = '0 10px 24px rgba(17,24,39,0.10)';
-                e.currentTarget.style.color = '#111827';
-              }}
-            >
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path d="M21.9 4.6c.3-1.2-.9-2.1-2-1.7L2.8 9.7c-1.2.5-1.2 2.2 0 2.7l4.6 1.8 1.7 5.3c.3 1 1.5 1.3 2.2.6l2.6-2.6 5 3.7c.9.7 2.2.2 2.4-1l2.7-15.6ZM8.1 13.7l10.8-7.2-8.5 8.6-.3 3.2-1.2-3.8-4.3-1.7 15.3-6.2-2.4 14.2-4.6-3.4-3.4 3.4.5-5.1-2-2Z" fill="currentColor" stroke="none"/>
-              </svg>
-            </a>
+            />
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
             <span
