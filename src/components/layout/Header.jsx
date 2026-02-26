@@ -45,7 +45,7 @@ export default function Header() {
                 width: '40px',
                 height: '40px',
                 background: '#FFFFFF',
-                backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F2bd24573055045d2ae33b145881c1be9?format=webp)',
+                backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F83e6757d058c4796b17a2841786c5053?format=webp)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 border: 'none',
