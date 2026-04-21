@@ -1,4 +1,5 @@
 import Header from '@/components/layout/Header';
+import Link from 'next/link';
 import RevealOnScroll from '@/components/RevealOnScroll';
 import LeadFormSection from '@/components/sections/LeadFormSection';
 import Button from '@/components/ui/Button';
@@ -178,6 +179,17 @@ export default function HomePage() {
           </Card>
         </Container>
       </section>
+
+      <footer className="border-t border-[color:var(--border)] py-8">
+        <Container>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
+            <p>© {new Date().getFullYear()} svoydom-lugansk.ru</p>
+            <Link href="/privacy-policy" className="focus-ring rounded-lg underline underline-offset-2 hover:text-[color:var(--accent2)]">
+              Политика обработки персональных данных
+            </Link>
+          </div>
+        </Container>
+      </footer>
     </main>
   );
 }
