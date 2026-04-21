@@ -1,11 +1,11 @@
 import Header from '@/components/layout/Header';
-import RevealOnScroll from '@/components/RevealOnScroll';
-import LeadFormSection from '@/components/sections/LeadFormSection';
+import Link from 'next/link';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
 import SectionHeader from '@/components/ui/SectionHeader';
-import ComplexCarouselCard from '@/components/complexes/ComplexCarouselCard';
 import brand from '@/data/brand';
 import complexes from '@/data/complexes';
 import faq from '@/data/faq';
@@ -13,21 +13,27 @@ import processSteps from '@/data/process';
 import reviews from '@/data/reviews';
 import services from '@/data/services';
 
+const MAX_URL = 'https://max.ru/u/f9LHodD0cOIi4r-SL0pK2dhDjayjfz3potOe5T20iWeHHeSSewgkP465gHM';
+
+const RevealOnScroll = dynamic(() => import('@/components/RevealOnScroll'), { ssr: false });
+const LeadFormSection = dynamic(() => import('@/components/sections/LeadFormSection'));
+const ComplexCarouselCard = dynamic(() => import('@/components/complexes/ComplexCarouselCard'));
+
 export default function HomePage() {
   return (
     <main>
       <RevealOnScroll />
       <Header />
 
-      <div
-        className="relative"
-        style={{
-          backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F6e6b28460afc4aa4a8fb711213fa8d32)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+      <div className="relative">
+        <Image
+          src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F6e6b28460afc4aa4a8fb711213fa8d32?width=1600&quality=68&format=webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
           <Container className="relative flex flex-col gap-5">
             {/* Hero Text Panel - localized backdrop only under content */}
@@ -56,10 +62,21 @@ export default function HomePage() {
                 >
                   Написать в Telegram
                 </Button>
+                <Button
+                  as="a"
+                  href={MAX_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="ghost"
+                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
+                >
+                  Написать в MAX
+                </Button>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.72)]">
                 <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
                 <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+                <a className="focus-ring rounded-lg px-1" href={MAX_URL} target="_blank" rel="noopener noreferrer">MAX</a>
               </div>
             </div>
 
@@ -178,6 +195,17 @@ export default function HomePage() {
           </Card>
         </Container>
       </section>
+
+      <footer className="border-t border-[color:var(--border)] py-8">
+        <Container>
+          <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
+            <p>© {new Date().getFullYear()} svoydom-lugansk.ru</p>
+            <Link href="/privacy-policy" className="focus-ring rounded-lg underline underline-offset-2 hover:text-[color:var(--accent2)]">
+              Политика обработки персональных данных
+            </Link>
+          </div>
+        </Container>
+      </footer>
     </main>
   );
 }
