@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import brand from '@/data/brand';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
