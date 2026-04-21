@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
@@ -52,6 +53,7 @@ const initialAnswers = {
   phone: '',
   telegram: '',
   company: '',
+  privacyConsent: false,
 };
 
 export default function LeadFormSection() {
@@ -159,6 +161,7 @@ export default function LeadFormSection() {
   const buildPayload = () => ({
     name: leadAnswers.name,
     phone: leadAnswers.phone,
+    privacyConsent: leadAnswers.privacyConsent,
     pageUrl: window.location.href,
     createdAt: new Date().toISOString(),
     company: leadAnswers.company,
@@ -182,6 +185,7 @@ export default function LeadFormSection() {
 
   const submitLead = async () => {
     if (isSubmitting) return false;
+    if (!leadAnswers.privacyConsent) return false;
 
     const payload = buildPayload();
 
@@ -333,6 +337,27 @@ export default function LeadFormSection() {
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={leadAnswers.name} onChange={(e) => setValue('name', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={leadAnswers.phone} onChange={(e) => setValue('phone', e.target.value)} required />
         <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={leadAnswers.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
+        <label className="flex items-start gap-2.5 rounded-xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.7)] px-3 py-2.5 text-xs leading-relaxed text-[color:var(--muted)] md:text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--accent2)]"
+            checked={leadAnswers.privacyConsent}
+            onChange={(e) => setValue('privacyConsent', e.target.checked)}
+            required
+          />
+          <span>
+            Даю согласие на обработку персональных данных и подтверждаю, что ознакомлен(а) с{' '}
+            <Link
+              href="/privacy-policy"
+              target="_blank"
+              rel="noreferrer"
+              className="underline decoration-[color:var(--accent2)] underline-offset-2 transition hover:text-[color:var(--accent2)]"
+            >
+              Политикой обработки персональных данных
+            </Link>
+            .
+          </span>
+        </label>
         <input
           tabIndex={-1}
           autoComplete="off"
@@ -376,7 +401,7 @@ export default function LeadFormSection() {
                   {embeddedStep < stepTitles.length ? (
                     <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim()}>
+                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim() || !leadAnswers.privacyConsent}>
                       {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
                     </Button>
                   )}
@@ -422,7 +447,7 @@ export default function LeadFormSection() {
                   {modalStep < stepTitles.length ? (
                     <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>Далее</Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim()}>
+                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim() || !leadAnswers.privacyConsent}>
                       {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
                     </Button>
                   )}
