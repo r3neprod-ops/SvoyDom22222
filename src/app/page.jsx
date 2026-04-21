@@ -13,6 +13,8 @@ import processSteps from '@/data/process';
 import reviews from '@/data/reviews';
 import services from '@/data/services';
 
+const MAX_URL = 'https://max.ru/u/f9LHodD0cOIi4r-SL0pK2dhDjayjfz3potOe5T20iWeHHeSSewgkP465gHM';
+
 const RevealOnScroll = dynamic(() => import('@/components/RevealOnScroll'), { ssr: false });
 const LeadFormSection = dynamic(() => import('@/components/sections/LeadFormSection'));
 const ComplexCarouselCard = dynamic(() => import('@/components/complexes/ComplexCarouselCard'));
@@ -60,10 +62,21 @@ export default function HomePage() {
                 >
                   Написать в Telegram
                 </Button>
+                <Button
+                  as="a"
+                  href={MAX_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="ghost"
+                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
+                >
+                  Написать в MAX
+                </Button>
               </div>
               <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.72)]">
                 <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
                 <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
+                <a className="focus-ring rounded-lg px-1" href={MAX_URL} target="_blank" rel="noopener noreferrer">MAX</a>
               </div>
             </div>
 
