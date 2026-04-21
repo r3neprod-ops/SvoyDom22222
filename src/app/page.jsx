@@ -1,12 +1,11 @@
 import Header from '@/components/layout/Header';
 import Link from 'next/link';
-import RevealOnScroll from '@/components/RevealOnScroll';
-import LeadFormSection from '@/components/sections/LeadFormSection';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
 import SectionHeader from '@/components/ui/SectionHeader';
-import ComplexCarouselCard from '@/components/complexes/ComplexCarouselCard';
 import brand from '@/data/brand';
 import complexes from '@/data/complexes';
 import faq from '@/data/faq';
@@ -14,21 +13,25 @@ import processSteps from '@/data/process';
 import reviews from '@/data/reviews';
 import services from '@/data/services';
 
+const RevealOnScroll = dynamic(() => import('@/components/RevealOnScroll'), { ssr: false });
+const LeadFormSection = dynamic(() => import('@/components/sections/LeadFormSection'));
+const ComplexCarouselCard = dynamic(() => import('@/components/complexes/ComplexCarouselCard'));
+
 export default function HomePage() {
   return (
     <main>
       <RevealOnScroll />
       <Header />
 
-      <div
-        className="relative"
-        style={{
-          backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F6e6b28460afc4aa4a8fb711213fa8d32)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      >
+      <div className="relative">
+        <Image
+          src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F6e6b28460afc4aa4a8fb711213fa8d32?width=1600&quality=68&format=webp"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
           <Container className="relative flex flex-col gap-5">
             {/* Hero Text Panel - localized backdrop only under content */}

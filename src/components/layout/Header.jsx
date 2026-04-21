@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import brand from '@/data/brand';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
@@ -40,18 +41,23 @@ export default function Header() {
               target="_blank"
               rel="noreferrer"
               aria-label="Telegram"
-              className="inline-flex items-center justify-center rounded-full transition-transform duration-150 hover:scale-110 active:scale-95"
+              className="inline-flex items-center justify-center overflow-hidden rounded-full transition-transform duration-150 hover:scale-110 active:scale-95"
               style={{
                 width: '40px',
                 height: '40px',
                 background: '#FFFFFF',
-                backgroundImage: 'url(https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F83e6757d058c4796b17a2841786c5053?format=webp)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
                 border: 'none',
                 boxShadow: '0 2px 8px rgba(17,24,39,0.08)',
               }}
-            />
+            >
+              <Image
+                src="https://cdn.builder.io/api/v1/image/assets%2F5940eccd50a845709f0c0fa0a222cdc1%2F83e6757d058c4796b17a2841786c5053?width=80&quality=70&format=webp"
+                alt=""
+                width={40}
+                height={40}
+                loading="lazy"
+              />
+            </a>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
             <span

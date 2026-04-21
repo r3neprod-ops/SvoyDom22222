@@ -69,7 +69,24 @@ export default function LeadFormSection() {
 
   useEffect(() => {
     const flag = sessionStorage.getItem('leadModalClosed');
-    if (!flag) setOpen(true);
+    if (flag) return;
+
+    const openModal = () => setOpen(true);
+    let timeoutId;
+
+    if (typeof window.requestIdleCallback === 'function') {
+      timeoutId = window.requestIdleCallback(openModal, { timeout: 1500 });
+    } else {
+      timeoutId = setTimeout(openModal, 900);
+    }
+
+    return () => {
+      if (typeof window.cancelIdleCallback === 'function' && typeof timeoutId === 'number') {
+        window.cancelIdleCallback(timeoutId);
+      } else {
+        clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const apartmentOptions = useMemo(() => {
