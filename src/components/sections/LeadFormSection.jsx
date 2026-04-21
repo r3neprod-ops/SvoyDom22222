@@ -142,6 +142,12 @@ export default function LeadFormSection() {
   };
 
   const nextModal = () => {
+    if (modalStep === 1 && leadAnswers.propertyType === 'consultation') {
+      setAmountError('');
+      setModalStep(stepTitles.length);
+      return;
+    }
+
     if (modalStep === 5 && !isOwnAmountValid()) {
       setAmountError('Введите сумму больше 0 или оставьте поле пустым.');
       return;
@@ -156,6 +162,12 @@ export default function LeadFormSection() {
   };
 
   const nextEmbedded = () => {
+    if (embeddedStep === 1 && leadAnswers.propertyType === 'consultation') {
+      setAmountError('');
+      setEmbeddedStep(stepTitles.length);
+      return;
+    }
+
     if (embeddedStep === 5 && !isOwnAmountValid()) {
       setAmountError('Введите сумму больше 0 или оставьте поле пустым.');
       return;
