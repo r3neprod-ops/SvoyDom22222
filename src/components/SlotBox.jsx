@@ -1,3 +1,6 @@
+import Image from 'next/image';
+import { extractUrlFromBackground, withBuilderImageParams } from '@/lib/image';
+
 export default function SlotBox({
   className = '',
   kind = 'image',
@@ -8,12 +11,9 @@ export default function SlotBox({
   children = null,
 }) {
   if (!debug) {
-    const style = backgroundImage ? {
-      backgroundImage,
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'center',
-      backgroundSize: 'cover',
-    } : {};
+    const imageUrl = extractUrlFromBackground(backgroundImage);
+    const optimizedSrc = withBuilderImageParams(imageUrl, { width: 900, quality: 68 });
+    const style = {};
 
     // Use slot-box-with-image class when backgroundImage is provided
     // This prevents the placeholder gradient from overlaying the actual image
@@ -22,7 +22,17 @@ export default function SlotBox({
       : `slot-box ${className}`;
 
     return (
-      <div className={slotClass} aria-hidden="true" style={style}>
+      <div className={`${slotClass} relative overflow-hidden`} aria-hidden="true" style={style}>
+        {optimizedSrc && (
+          <Image
+            src={optimizedSrc}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            loading="lazy"
+            className="object-cover object-center"
+          />
+        )}
         {children}
       </div>
     );

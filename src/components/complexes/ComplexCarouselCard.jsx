@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import Card from '@/components/ui/Card';
 import SlotBox from '@/components/SlotBox';
 
@@ -97,34 +98,31 @@ export default function ComplexCarouselCard({ complex }) {
                 }`}
                 style={{ pointerEvents: index === activeIndex ? 'auto' : 'none' }}
               >
-                <SlotBox
-                  kind="image"
-                  slotKey={`complex-${complex.id}-photo-${index + 1}`}
-                  fileHint={`complex-${complex.id}-photo-${index + 1}.jpg`}
-                  className="h-full"
-                  backgroundImage={
-                    Array.isArray(complex.backgroundImages)
-                      ? complex.backgroundImages[index]
-                      : complex.backgroundImage
-                  }
-                >
-                  {index === activeIndex && complex.extraImage && (
-                    <img
-                      loading="lazy"
-                      srcSet={complex.extraImage.srcSet}
-                      style={{
-                        aspectRatio: '1.42',
-                        objectFit: 'cover',
-                        objectPosition: 'center',
-                        width: '100%',
-                        marginTop: '20px',
-                        minHeight: '20px',
-                        minWidth: '20px',
-                        overflow: 'hidden',
-                      }}
-                    />
-                  )}
-                </SlotBox>
+                {index === activeIndex && (
+                  <SlotBox
+                    kind="image"
+                    slotKey={`complex-${complex.id}-photo-${index + 1}`}
+                    fileHint={`complex-${complex.id}-photo-${index + 1}.jpg`}
+                    className="h-full"
+                    backgroundImage={
+                      Array.isArray(complex.backgroundImages)
+                        ? complex.backgroundImages[index]
+                        : complex.backgroundImage
+                    }
+                  >
+                    {complex.extraImage?.srcSet && (
+                      <Image
+                        src={complex.extraImage.srcSet}
+                        alt=""
+                        width={640}
+                        height={450}
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        loading="lazy"
+                        className="mt-5 h-auto w-full min-h-[20px] min-w-[20px] overflow-hidden object-cover object-center"
+                      />
+                    )}
+                  </SlotBox>
+                )}
               </div>
             ))}
 
