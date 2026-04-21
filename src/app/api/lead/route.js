@@ -123,6 +123,7 @@ function buildTelegramText(payload) {
       lines.push(`<b>${escapeHtml(question)}</b> ${escapeHtml(answer)}`);
     }
   }
+  lines.push(`Согласие на ПДн: ${payload.privacyConsent ? 'Да' : 'Нет'}`);
 
   if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
   lines.push(`Время: ${escapeHtml(payload.createdAt || new Date().toISOString())}`);
@@ -188,6 +189,16 @@ export async function POST(request) {
     if (!phoneValidation.ok) {
       return Response.json(phoneValidation.body, { status: phoneValidation.status });
     }
+    if (payload.privacyConsent !== true) {
+      return Response.json(
+        {
+          ok: false,
+          code: 'MISSING_PRIVACY_CONSENT',
+          message: 'Необходимо согласие на обработку персональных данных.',
+        },
+        { status: 400 }
+      );
+    }
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
@@ -197,6 +208,7 @@ export async function POST(request) {
     const safePayload = {
       ...payload,
       phone: phoneValidation.phone,
+      privacyConsent: payload.privacyConsent === true,
       answers: asRecord(payload.answers),
     };
 
