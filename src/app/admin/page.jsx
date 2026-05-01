@@ -1,4 +1,4 @@
-import { readDb } from '@/lib/admin/store';
+import { getLeads } from '@/lib/admin/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,8 +10,7 @@ function isToday(iso) {
 }
 
 export default function AdminPage() {
-  const db = readDb();
-  const leads = [...(db.leads || [])].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  const leads = [...getLeads()].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
   const total = leads.length;
   const fresh = leads.filter((l) => (l.status || 'Новый') === 'Новый').length;
