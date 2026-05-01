@@ -1,6 +1,3 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getSessionUser } from '@/lib/admin/auth';
 import { readDb } from '@/lib/admin/store';
 
 export default function AdminPage() {
@@ -37,3 +34,17 @@ export default function AdminPage() {
     </section>
   </main>;
 }
+
+const thStyle = {
+  border: '1px solid #ddd',
+  textAlign: 'left',
+  padding: '10px',
+  background: '#f6f6f6',
+};
+
+const tdStyle = {
+  border: '1px solid #ddd',
+  textAlign: 'left',
+  padding: '10px',
+  verticalAlign: 'top',
+};
