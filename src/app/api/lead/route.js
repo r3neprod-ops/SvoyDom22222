@@ -226,6 +226,8 @@ export async function POST(request) {
       answers: asRecord(payload.answers),
     };
 
+    const leadId = generateLeadId();
+
     const dedupeKey = makeDedupKey(phoneValidation.phoneDigits, safePayload.answers);
     if (isDuplicateLead(dedupeKey)) {
       return Response.json({ ok: true, deduped: true });
