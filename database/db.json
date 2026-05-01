@@ -1,13 +1,3 @@
 {
-  "users": [],
-  "leads": [],
-  "lead_comments": [],
-  "lead_history": [],
-  "sessions": [],
-  "counters": {
-    "users": 0,
-    "leads": 0,
-    "comments": 0,
-    "history": 0
-  }
+  "leads": []
 }

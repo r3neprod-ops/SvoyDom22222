@@ -1,4 +1,4 @@
-import { readDb, writeDb, nextId, nowIso } from '@/lib/admin/store';
+import { addLead } from '@/lib/admin/store';
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const TELEGRAM_CHAT_ID = '612622372';
 const recentLeadStore = new Map();
@@ -234,22 +234,8 @@ export async function POST(request) {
 
     let leadId = null;
     try {
-      const db = readDb();
-      const ts = nowIso();
-      leadId = nextId(db, 'leads');
-      db.leads.push({
-        id: leadId,
-        created_at: ts,
-        updated_at: ts,
-        name: safePayload.name || '',
-        phone: safePayload.phone || '',
-        form_data_json: safePayload.answers,
-        source_page: safePayload.pageUrl || '',
-        status: 'Новый',
-        assigned_user_id: null,
-        admin_comment: '',
-      });
-      writeDb(db);
+      const lead = addLead(safePayload);
+      leadId = lead.id;
     } catch (dbError) {
       console.error('Lead DB save error:', dbError);
     }
