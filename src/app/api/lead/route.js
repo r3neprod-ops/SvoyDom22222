@@ -1,14 +1,10 @@
+import { readDb, writeDb, nextId, nowIso } from '@/lib/admin/store';
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const TELEGRAM_CHAT_ID = '612622372';
 const recentLeadStore = new Map();
 
 const ADMIN_LEAD_BASE_URL = process.env.ADMIN_LEAD_BASE_URL || 'https://svoydom-lugansk.ru/admin/leads';
 
-function generateLeadId() {
-  const timePart = Date.now().toString(36).toUpperCase();
-  const randomPart = Math.random().toString(36).slice(2, 8).toUpperCase();
-  return `${timePart}-${randomPart}`;
-}
 
 function buildLeadAdminUrl(leadId) {
   if (!leadId) return '';
@@ -235,6 +231,29 @@ export async function POST(request) {
     const dedupeKey = makeDedupKey(phoneValidation.phoneDigits, safePayload.answers);
     if (isDuplicateLead(dedupeKey)) {
       return Response.json({ ok: true, deduped: true });
+    }
+
+
+    let leadId = null;
+    try {
+      const db = readDb();
+      const ts = nowIso();
+      leadId = nextId(db, 'leads');
+      db.leads.push({
+        id: leadId,
+        created_at: ts,
+        updated_at: ts,
+        name: safePayload.name || '',
+        phone: safePayload.phone || '',
+        form_data_json: safePayload.answers,
+        source_page: safePayload.pageUrl || '',
+        status: 'Новый',
+        assigned_user_id: null,
+        admin_comment: '',
+      });
+      writeDb(db);
+    } catch (dbError) {
+      console.error('Lead DB save error:', dbError);
     }
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
