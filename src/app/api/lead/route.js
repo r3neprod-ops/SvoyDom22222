@@ -1,17 +1,258 @@
+import { readDb, writeDb, nextId, nowIso } from '@/lib/admin/store';
+const DEDUPE_WINDOW_MS = 30 * 1000;
+const TELEGRAM_CHAT_ID = '612622372';
+const recentLeadStore = new Map();
+
+const ADMIN_LEAD_BASE_URL = process.env.ADMIN_LEAD_BASE_URL || 'https://svoydom-lugansk.ru/admin/leads';
+
+
+function buildLeadAdminUrl(leadId) {
+  if (!leadId) return '';
+  const baseUrl = String(ADMIN_LEAD_BASE_URL || '').trim().replace(/\/$/, '');
+  if (!baseUrl) return '';
+  return `${baseUrl}/${encodeURIComponent(leadId)}`;
+}
+
+const PROPERTY_TYPE_LABELS = {
+  apartment: 'Новостройка (квартира)',
+  apartment_newbuild: 'Новостройка (квартира)',
+  house: 'Частный дом',
+  land_house: 'Участок + дом',
+  'land+house': 'Участок + дом',
+  plot_house: 'Участок + дом',
+  consultation: 'Нужна консультация',
+};
+
+const APARTMENT_TYPE_LABELS = {
+  studio_20_30: 'Студия (20–30 м²)',
+  '1k_40_55': '1-комнатная (40–55 м²)',
+  '2k_55_65': '2-комнатная (55–65 м²)',
+  '3k_65_plus': '3+ комнат (65+ м²)',
+  dont_know: 'Пока не знаю',
+};
+const DOWN_PAYMENT_LABELS = {
+  matcap: 'Маткапитал',
+  own: 'Свои средства',
+  matcap_plus_own: 'Маткапитал + свои средства',
+};
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+function humanizeFallback(value) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  return text.replaceAll('_', ' ');
+}
+
+function formatBudget(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return '';
+
+  const mapped = {
+    '4_6': '4–6 млн ₽',
+    '6_8': '6–8 млн ₽',
+    '8_10': '8–10 млн ₽',
+    '10_plus': '10+ млн ₽',
+    custom: 'Свой вариант',
+  };
+
+  if (mapped[raw]) return mapped[raw];
+
+  const normalized = raw.replace(',', '.');
+  if (/^\d+(?:\.\d+)?_\d+(?:\.\d+)?$/.test(normalized)) {
+    const [from, to] = normalized.split('_');
+    return `${from}–${to} млн ₽`;
+  }
+  if (/^\d+(?:\.\d+)?$/.test(normalized)) {
+    return `${normalized} млн ₽`;
+  }
+
+  return humanizeFallback(raw);
+}
+
+function mappedAnswer(value, map) {
+  if (value === null || value === undefined || value === '') return '';
+  const normalized = String(value).trim();
+  return map[normalized] || humanizeFallback(normalized);
+}
+
+function makeDedupKey(phoneDigits, answers) {
+  const normalizedAnswers = Object.keys(answers || {})
+    .sort()
+    .reduce((acc, key) => {
+      const value = answers[key];
+      if (value === null || value === undefined || value === '') return acc;
+      acc[key] = String(value);
+      return acc;
+    }, {});
+
+  return `${phoneDigits}|${JSON.stringify(normalizedAnswers)}`;
+}
+
+function isDuplicateLead(key) {
+  const now = Date.now();
+
+  for (const [storedKey, expiresAt] of recentLeadStore.entries()) {
+    if (expiresAt <= now) recentLeadStore.delete(storedKey);
+  }
+
+  const expiresAt = recentLeadStore.get(key);
+  if (expiresAt && expiresAt > now) return true;
+
+  recentLeadStore.set(key, now + DEDUPE_WINDOW_MS);
+  return false;
+}
+
+function asRecord(value) {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+}
+
+function buildTelegramText(payload, leadId) {
+  const lines = ['🆕 <b>Новая заявка</b>'];
+  const leadAdminUrl = buildLeadAdminUrl(leadId);
+
+  lines.push(`ID лида: <code>${escapeHtml(leadId || '—')}</code>`);
+  lines.push(`Имя: ${escapeHtml(payload.name || '—')}`);
+  lines.push(`Телефон: ${escapeHtml(payload.phone || '—')}`);
+
+  const answers = asRecord(payload.answers);
+  const formattedAnswers = [
+    ['Что вы хотите выбрать?', mappedAnswer(answers.propertyType, PROPERTY_TYPE_LABELS)],
+    ['Какой вариант вы рассматриваете?', mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)],
+    ['На какой бюджет ориентируетесь?', formatBudget(answers.budgetPreset) || humanizeFallback(answers.budgetCustom)],
+    ['Первоначальный взнос:', mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)],
+  ].filter(([, answer]) => Boolean(answer));
+
+  if (formattedAnswers.length > 0) {
+    lines.push('');
+    lines.push('<b>Ответы:</b>');
+    for (const [question, answer] of formattedAnswers) {
+      lines.push(`<b>${escapeHtml(question)}</b> ${escapeHtml(answer)}`);
+    }
+  }
+  lines.push(`Согласие на ПДн: ${payload.privacyConsent ? 'Да' : 'Нет'}`);
+
+  if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
+  if (leadAdminUrl) lines.push(`Карточка лида: ${escapeHtml(leadAdminUrl)}`);
+  lines.push(`Время: ${escapeHtml(payload.createdAt || new Date().toISOString())}`);
+
+  return lines.join('\n');
+}
+
+function validatePhone(rawPhone) {
+  const phone = String(rawPhone ?? '').trim();
+  if (!phone) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        ok: false,
+        code: 'MISSING_PHONE',
+        message: 'Укажите номер телефона (можно с +7).',
+      },
+    };
+  }
+
+  if (/\p{L}/u.test(phone)) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        ok: false,
+        code: 'INVALID_PHONE',
+        message: 'Некорректный номер. Используйте цифры, +, пробелы, скобки или дефисы.',
+      },
+    };
+  }
+
+  const phoneDigits = phone.replace(/\D/g, '');
+  if (phoneDigits.length < 10) {
+    return {
+      ok: false,
+      status: 400,
+      body: {
+        ok: false,
+        code: 'INVALID_PHONE',
+        message: 'Номер слишком короткий. Пример: +7 999 000-00-00',
+      },
+    };
+  }
+
+  return { ok: true, phone, phoneDigits };
+}
+
 export async function POST(request) {
   try {
     const payload = await request.json();
 
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_CHAT_ID;
-
-    if (!botToken || !chatId) {
-      throw new Error('Missing TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID env variable.');
+    if (!payload || typeof payload !== 'object') {
+      return Response.json({ ok: false, code: 'BAD_REQUEST', message: 'Пустой запрос.' }, { status: 400 });
     }
 
-    const text = Object.entries(payload || {})
-      .map(([key, value]) => `${key}: ${value ?? ''}`)
-      .join('\n');
+    if (payload.company && String(payload.company).trim()) {
+      return Response.json({ ok: true });
+    }
+
+    const phoneValidation = validatePhone(payload.phone);
+    if (!phoneValidation.ok) {
+      return Response.json(phoneValidation.body, { status: phoneValidation.status });
+    }
+    if (payload.privacyConsent !== true) {
+      return Response.json(
+        {
+          ok: false,
+          code: 'MISSING_PRIVACY_CONSENT',
+          message: 'Необходимо согласие на обработку персональных данных.',
+        },
+        { status: 400 }
+      );
+    }
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      return Response.json({ ok: false, code: 'MISSING_TELEGRAM_TOKEN', message: 'Missing TELEGRAM_BOT_TOKEN' }, { status: 500 });
+    }
+
+    const safePayload = {
+      ...payload,
+      phone: phoneValidation.phone,
+      privacyConsent: payload.privacyConsent === true,
+      answers: asRecord(payload.answers),
+    };
+
+    const dedupeKey = makeDedupKey(phoneValidation.phoneDigits, safePayload.answers);
+    if (isDuplicateLead(dedupeKey)) {
+      return Response.json({ ok: true, deduped: true });
+    }
+
+
+    let leadId = null;
+    try {
+      const db = readDb();
+      const ts = nowIso();
+      leadId = nextId(db, 'leads');
+      db.leads.push({
+        id: leadId,
+        created_at: ts,
+        updated_at: ts,
+        name: safePayload.name || '',
+        phone: safePayload.phone || '',
+        form_data_json: safePayload.answers,
+        source_page: safePayload.pageUrl || '',
+        status: 'Новый',
+        assigned_user_id: null,
+        admin_comment: '',
+      });
+      writeDb(db);
+    } catch (dbError) {
+      console.error('Lead DB save error:', dbError);
+    }
 
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
@@ -19,21 +260,41 @@ export async function POST(request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        chat_id: chatId,
-        text,
+        chat_id: TELEGRAM_CHAT_ID,
+        text: buildTelegramText(safePayload, leadId),
         parse_mode: 'HTML',
+        disable_web_page_preview: true,
       }),
     });
 
     if (!telegramResponse.ok) {
-      const telegramErrorText = await telegramResponse.text();
-      throw new Error(telegramErrorText || 'Telegram API request failed.');
+      let telegramBody = null;
+      try {
+        telegramBody = await telegramResponse.json();
+      } catch {
+        telegramBody = { text: await telegramResponse.text() };
+      }
+      console.error('Telegram API error:', telegramBody);
+      return Response.json(
+        {
+          ok: false,
+          code: 'TELEGRAM_ERROR',
+          message: 'Не удалось отправить. Попробуйте ещё раз.',
+          telegram: telegramBody,
+        },
+        { status: 500 }
+      );
     }
 
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, leadId });
   } catch (error) {
+    console.error('Lead API error:', error);
     return Response.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        ok: false,
+        code: 'SERVER_ERROR',
+        message: 'Не удалось отправить. Попробуйте ещё раз.',
+      },
       { status: 500 }
     );
   }
