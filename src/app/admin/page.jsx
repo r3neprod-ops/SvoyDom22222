@@ -1,12 +1,60 @@
-import Link from 'next/link';
-import { redirect } from 'next/navigation';
-import { getSessionUser } from '@/lib/admin/auth';
 import { readDb } from '@/lib/admin/store';
 
 export default function AdminPage() {
-  const user = getSessionUser();
-  if (!user) redirect('/admin/login');
   const db = readDb();
-  const leads = user.role === 'admin' ? db.leads : db.leads.filter((l) => l.assigned_user_id === user.id);
-  return <main><h1>Лиды</h1><Link href='/admin/logout'>Выйти</Link>{user.role==='admin' && <Link href='/admin/users'>Сотрудники</Link>}<table><thead><tr><th>ID</th><th>Дата</th><th>Имя</th><th>Телефон</th><th>Статус</th><th>Ответственный</th><th/></tr></thead><tbody>{leads.map((l)=>{const ass=db.users.find(u=>u.id===l.assigned_user_id);return <tr key={l.id}><td>{l.id}</td><td>{l.created_at}</td><td>{l.name||'—'}</td><td>{l.phone||'—'}</td><td>{l.status}</td><td>{ass?.name||'Не назначен'}</td><td><Link href={`/admin/lead?id=${l.id}`}>Открыть</Link></td></tr>})}</tbody></table></main>
+  const leads = [...(db.leads || [])].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  return (
+    <main style={{ padding: '24px', background: '#fff', minHeight: '100vh', color: '#111' }}>
+      <h1 style={{ marginBottom: '8px' }}>Админ-панель</h1>
+      <h2 style={{ marginTop: 0, marginBottom: '16px' }}>Лиды</h2>
+
+      {leads.length === 0 ? (
+        <p>Пока лидов нет</p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+            <thead>
+              <tr>
+                <th style={thStyle}>ID</th>
+                <th style={thStyle}>Дата и время</th>
+                <th style={thStyle}>Имя</th>
+                <th style={thStyle}>Телефон</th>
+                <th style={thStyle}>Данные формы</th>
+                <th style={thStyle}>Источник</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((lead) => (
+                <tr key={lead.id}>
+                  <td style={tdStyle}>{lead.id ?? '—'}</td>
+                  <td style={tdStyle}>{lead.created_at || '—'}</td>
+                  <td style={tdStyle}>{lead.name || '—'}</td>
+                  <td style={tdStyle}>{lead.phone || '—'}</td>
+                  <td style={tdStyle}>
+                    <pre style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{JSON.stringify(lead.form_data_json || {}, null, 2)}</pre>
+                  </td>
+                  <td style={tdStyle}>{lead.source_page || 'site-form'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </main>
+  );
 }
+
+const thStyle = {
+  border: '1px solid #ddd',
+  textAlign: 'left',
+  padding: '10px',
+  background: '#f6f6f6',
+};
+
+const tdStyle = {
+  border: '1px solid #ddd',
+  textAlign: 'left',
+  padding: '10px',
+  verticalAlign: 'top',
+};
