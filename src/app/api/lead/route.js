@@ -1,6 +1,17 @@
+import { readDb, writeDb, nextId, nowIso } from '@/lib/admin/store';
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const TELEGRAM_CHAT_ID = '612622372';
 const recentLeadStore = new Map();
+
+const ADMIN_LEAD_BASE_URL = process.env.ADMIN_LEAD_BASE_URL || 'https://svoydom-lugansk.ru/admin/leads';
+
+
+function buildLeadAdminUrl(leadId) {
+  if (!leadId) return '';
+  const baseUrl = String(ADMIN_LEAD_BASE_URL || '').trim().replace(/\/$/, '');
+  if (!baseUrl) return '';
+  return `${baseUrl}/${encodeURIComponent(leadId)}`;
+}
 
 const PROPERTY_TYPE_LABELS = {
   apartment: 'Новостройка (квартира)',
@@ -102,9 +113,11 @@ function asRecord(value) {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
-function buildTelegramText(payload) {
+function buildTelegramText(payload, leadId) {
   const lines = ['🆕 <b>Новая заявка</b>'];
+  const leadAdminUrl = buildLeadAdminUrl(leadId);
 
+  lines.push(`ID лида: <code>${escapeHtml(leadId || '—')}</code>`);
   lines.push(`Имя: ${escapeHtml(payload.name || '—')}`);
   lines.push(`Телефон: ${escapeHtml(payload.phone || '—')}`);
 
@@ -126,6 +139,7 @@ function buildTelegramText(payload) {
   lines.push(`Согласие на ПДн: ${payload.privacyConsent ? 'Да' : 'Нет'}`);
 
   if (payload.pageUrl) lines.push(`Страница: ${escapeHtml(payload.pageUrl)}`);
+  if (leadAdminUrl) lines.push(`Карточка лида: ${escapeHtml(leadAdminUrl)}`);
   lines.push(`Время: ${escapeHtml(payload.createdAt || new Date().toISOString())}`);
 
   return lines.join('\n');
@@ -217,6 +231,29 @@ export async function POST(request) {
       return Response.json({ ok: true, deduped: true });
     }
 
+
+    let leadId = null;
+    try {
+      const db = readDb();
+      const ts = nowIso();
+      leadId = nextId(db, 'leads');
+      db.leads.push({
+        id: leadId,
+        created_at: ts,
+        updated_at: ts,
+        name: safePayload.name || '',
+        phone: safePayload.phone || '',
+        form_data_json: safePayload.answers,
+        source_page: safePayload.pageUrl || '',
+        status: 'Новый',
+        assigned_user_id: null,
+        admin_comment: '',
+      });
+      writeDb(db);
+    } catch (dbError) {
+      console.error('Lead DB save error:', dbError);
+    }
+
     const telegramResponse = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: 'POST',
       headers: {
@@ -224,7 +261,7 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         chat_id: TELEGRAM_CHAT_ID,
-        text: buildTelegramText(safePayload),
+        text: buildTelegramText(safePayload, leadId),
         parse_mode: 'HTML',
         disable_web_page_preview: true,
       }),
@@ -249,7 +286,7 @@ export async function POST(request) {
       );
     }
 
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, leadId });
   } catch (error) {
     console.error('Lead API error:', error);
     return Response.json(
