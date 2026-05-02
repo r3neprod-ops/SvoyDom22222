@@ -17,6 +17,55 @@ const FILTER_OPTIONS = [
   { value: 'closed',      label: 'Закрыты' },
 ];
 
+const MSG_LABELS = {
+  'Тип': {
+    apartment:         'Новостройка (квартира)',
+    apartment_newbuild:'Новостройка (квартира)',
+    house:             'Частный дом',
+    land_house:        'Участок + дом',
+    'land+house':      'Участок + дом',
+    plot_house:        'Участок + дом',
+    consultation:      'Нужна консультация',
+  },
+  'Планировка': {
+    studio_20_30: 'Студия 20–30 м²',
+    studio_30_40: 'Студия 30–40 м²',
+    one_40_55:    '1-комнатная 40–55 м²',
+    '1k_40_55':   '1-комнатная 40–55 м²',
+    two_55_75:    '2-комнатная 55–75 м²',
+    '2k_55_65':   '2-комнатная 55–65 м²',
+    three_75_100: '3-комнатная 75–100 м²',
+    '3k_65_plus': '3+ комнат 65+ м²',
+    four_100:     '4+ комнат от 100 м²',
+  },
+  'Бюджет': {
+    '3_5':    '3–5 млн ₽',
+    '5_7':    '5–7 млн ₽',
+    '6_8':    '6–8 млн ₽',
+    '7_10':   '7–10 млн ₽',
+    '10_15':  '10–15 млн ₽',
+    '15_plus':'от 15 млн ₽',
+  },
+  'Взнос': {
+    matcap:      'Материнский капитал',
+    mortgage:    'Ипотека',
+    cash:        'Наличные',
+    installment: 'Рассрочка',
+  },
+};
+
+function formatMessage(message) {
+  if (!message) return '—';
+  return message.split(', ').map((part) => {
+    const sep = part.indexOf(': ');
+    if (sep === -1) return part;
+    const key = part.slice(0, sep);
+    const val = part.slice(sep + 2);
+    const dict = MSG_LABELS[key];
+    return `${key}: ${dict?.[val] ?? val}`;
+  }).join(', ');
+}
+
 function formatDate(value) {
   if (!value) return '—';
   return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
@@ -139,7 +188,7 @@ export default function DashboardClient({ user }) {
                       <td className="whitespace-nowrap p-3 text-slate-500">{formatDate(lead.created_at)}</td>
                       <td className="p-3 font-medium">{lead.name || '—'}</td>
                       <td className="whitespace-nowrap p-3">{lead.phone || '—'}</td>
-                      <td className="max-w-xs p-3 text-slate-600">{lead.message || '—'}</td>
+                      <td className="max-w-xs p-3 text-slate-600">{formatMessage(lead.message)}</td>
                       <td className="p-3">
                         <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[lead.status] ?? 'bg-slate-100 text-slate-600'}`}>
                           {STATUS_LABELS[lead.status] ?? lead.status}
