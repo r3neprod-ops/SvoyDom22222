@@ -29,10 +29,13 @@ export async function GET(request) {
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
   const leads = await sql.query(
     `SELECT l.id, l.name, l.phone, l.message, l.status, l.assigned_to, l.created_at,
-            u.name AS assigned_to_name
+            u.name AS assigned_to_name,
+            COUNT(c.id)::int AS comment_count
      FROM leads l
      LEFT JOIN users u ON l.assigned_to = u.id
+     LEFT JOIN comments c ON c.lead_id = l.id
      ${where}
+     GROUP BY l.id, u.name
      ORDER BY l.created_at DESC`,
     params
   );
