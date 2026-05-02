@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/admin/auth';
-import { getDb } from '@/lib/admin/db';
+import { getSql, ensureSchema } from '@/lib/admin/db';
 
 export async function PATCH(request, { params }) {
   const user = await getAuthUser();
@@ -9,8 +9,9 @@ export async function PATCH(request, { params }) {
   const id = Number(params.id);
   if (!id) return NextResponse.json({ ok: false }, { status: 400 });
 
-  const db = getDb();
-  const lead = db.prepare('SELECT * FROM leads WHERE id = ?').get(id);
+  await ensureSchema();
+  const sql = getSql();
+  const [lead] = await sql`SELECT * FROM leads WHERE id = ${id}`;
   if (!lead) return NextResponse.json({ ok: false, message: 'Лид не найден' }, { status: 404 });
 
   if (user.role === 'employee' && lead.assigned_to !== user.id) {
@@ -26,8 +27,11 @@ export async function PATCH(request, { params }) {
     return NextResponse.json({ ok: false, message: 'Нет данных для обновления' }, { status: 400 });
   }
 
-  const setClauses = Object.keys(updates).map((k) => `${k} = ?`).join(', ');
-  db.prepare(`UPDATE leads SET ${setClauses} WHERE id = ?`).run(...Object.values(updates), id);
+  const keys = Object.keys(updates);
+  const values = Object.values(updates);
+  const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
+  values.push(id);
+  await sql(`UPDATE leads SET ${setClauses} WHERE id = $${values.length}`, values);
 
   return NextResponse.json({ ok: true });
 }
@@ -40,6 +44,8 @@ export async function DELETE(request, { params }) {
   const id = Number(params.id);
   if (!id) return NextResponse.json({ ok: false }, { status: 400 });
 
-  getDb().prepare('DELETE FROM leads WHERE id = ?').run(id);
+  await ensureSchema();
+  const sql = getSql();
+  await sql`DELETE FROM leads WHERE id = ${id}`;
   return NextResponse.json({ ok: true });
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getDb } from '@/lib/admin/db';
+import { getSql, ensureSchema } from '@/lib/admin/db';
 import { signToken } from '@/lib/admin/auth';
 
 export async function POST(request) {
@@ -10,9 +10,11 @@ export async function POST(request) {
       return NextResponse.json({ ok: false, message: 'Укажите логин и пароль' }, { status: 400 });
     }
 
-    const db = getDb();
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-    if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+    await ensureSchema();
+    const sql = getSql();
+    const [user] = await sql`SELECT * FROM users WHERE username = ${username}`;
+
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return NextResponse.json({ ok: false, message: 'Неверный логин или пароль' }, { status: 401 });
     }
 

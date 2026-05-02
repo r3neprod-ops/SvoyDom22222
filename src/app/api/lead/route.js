@@ -234,7 +234,7 @@ export async function POST(request) {
 
     let leadId = null;
     try {
-      const lead = addLead(safePayload);
+      const lead = await addLead(safePayload);
       leadId = lead.id;
     } catch (dbError) {
       console.error('Lead DB save error:', dbError);

@@ -1,56 +1,50 @@
-import Database from 'better-sqlite3';
-import path from 'path';
-import fs from 'fs';
+import { neon } from '@neondatabase/serverless';
 import bcrypt from 'bcryptjs';
 
-const DB_PATH = process.env.DATABASE_PATH
-  ? path.resolve(process.env.DATABASE_PATH)
-  : path.join(process.cwd(), 'database', 'leads.db');
+let initialized = false;
 
-export function getDb() {
-  if (!globalThis._sqdb) {
-    const dir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
-    const db = new Database(DB_PATH);
-    db.pragma('journal_mode = WAL');
-    db.pragma('foreign_keys = ON');
-    initSchema(db);
-    globalThis._sqdb = db;
+export function getSql() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable is not set');
   }
-  return globalThis._sqdb;
+  return neon(process.env.DATABASE_URL);
 }
 
-function initSchema(db) {
-  db.exec(`
+export async function ensureSchema() {
+  if (initialized) return;
+  const sql = getSql();
+
+  await sql`
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL CHECK(role IN ('admin', 'employee')),
       name TEXT NOT NULL
-    );
+    )
+  `;
 
+  await sql`
     CREATE TABLE IF NOT EXISTS leads (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      id SERIAL PRIMARY KEY,
       name TEXT,
       phone TEXT,
       message TEXT,
       status TEXT NOT NULL DEFAULT 'new',
       assigned_to INTEGER REFERENCES users(id),
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
 
-  const { count } = db.prepare('SELECT COUNT(*) as count FROM users').get();
+  const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM users`;
   if (count === 0) {
-    const insert = db.prepare(
-      'INSERT INTO users (username, password_hash, role, name) VALUES (?, ?, ?, ?)'
-    );
-    db.transaction(() => {
-      insert.run('admin',     bcrypt.hashSync('admin123', 10), 'admin',    'Администратор');
-      insert.run('employee1', bcrypt.hashSync('emp123',   10), 'employee', 'Сотрудник 1');
-      insert.run('employee2', bcrypt.hashSync('emp456',   10), 'employee', 'Сотрудник 2');
-    })();
+    await sql`
+      INSERT INTO users (username, password_hash, role, name) VALUES
+      ('admin',     ${bcrypt.hashSync('admin123', 10)}, 'admin',    'Администратор'),
+      ('employee1', ${bcrypt.hashSync('emp123',   10)}, 'employee', 'Сотрудник 1'),
+      ('employee2', ${bcrypt.hashSync('emp456',   10)}, 'employee', 'Сотрудник 2')
+    `;
   }
+
+  initialized = true;
 }
