@@ -36,6 +36,15 @@ export async function ensureSchema() {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      id SERIAL PRIMARY KEY,
+      endpoint TEXT UNIQUE NOT NULL,
+      subscription JSONB NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `;
+
   const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM users`;
   if (count === 0) {
     await sql`

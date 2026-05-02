@@ -1,0 +1,29 @@
+import { getAuthUser } from '@/lib/admin/auth';
+import { getSql, ensureSchema } from '@/lib/admin/db';
+
+export async function POST(request) {
+  const user = await getAuthUser();
+  if (!user) return Response.json({ ok: false }, { status: 401 });
+
+  let subscription;
+  try {
+    ({ subscription } = await request.json());
+  } catch {
+    return Response.json({ ok: false, message: 'Invalid JSON' }, { status: 400 });
+  }
+
+  if (!subscription?.endpoint) {
+    return Response.json({ ok: false, message: 'Invalid subscription' }, { status: 400 });
+  }
+
+  await ensureSchema();
+  const sql = getSql();
+
+  await sql`
+    INSERT INTO push_subscriptions (endpoint, subscription)
+    VALUES (${subscription.endpoint}, ${JSON.stringify(subscription)})
+    ON CONFLICT (endpoint) DO UPDATE SET subscription = EXCLUDED.subscription
+  `;
+
+  return Response.json({ ok: true });
+}

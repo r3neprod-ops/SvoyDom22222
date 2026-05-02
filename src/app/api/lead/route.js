@@ -1,4 +1,5 @@
 import { addLead } from '@/lib/admin/store';
+import { sendPushToAll } from '@/lib/admin/push';
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const TELEGRAM_CHAT_ID = '612622372';
 const recentLeadStore = new Map();
@@ -236,6 +237,10 @@ export async function POST(request) {
     try {
       const lead = await addLead(safePayload);
       leadId = lead.id;
+      sendPushToAll({
+        title: 'Новый лид!',
+        body: `Имя: ${safePayload.name || '—'}, Телефон: ${safePayload.phone || '—'}`,
+      }).catch((err) => console.error('Push notification error:', err));
     } catch (dbError) {
       console.error('Lead DB save error:', dbError);
     }

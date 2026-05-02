@@ -71,13 +71,55 @@ function formatDate(value) {
   return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
 }
 
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replaceAll('-', '+').replaceAll('_', '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
 export default function DashboardClient({ user }) {
   const router = useRouter();
   const [leads, setLeads] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [filter, setFilter] = useState('');
   const [loading, setLoading] = useState(true);
+  const [notifStatus, setNotifStatus] = useState('default');
   const isAdmin = user.role === 'admin';
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifStatus(Notification.permission);
+    }
+  }, []);
+
+  const enableNotifications = async () => {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    setNotifStatus('loading');
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== 'granted') {
+        setNotifStatus(permission);
+        return;
+      }
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      const keyRes = await fetch('/api/push/vapid-public-key');
+      const { publicKey } = await keyRes.json();
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      });
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ subscription }),
+      });
+      setNotifStatus('granted');
+    } catch (err) {
+      console.error('Push subscription error:', err);
+      setNotifStatus('default');
+    }
+  };
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -139,12 +181,37 @@ export default function DashboardClient({ user }) {
               {isAdmin ? `Администратор · ${user.name}` : `Сотрудник · ${user.name}`}
             </p>
           </div>
-          <button
-            onClick={logout}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
-          >
-            Выйти
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <button
+                onClick={notifStatus === 'granted' ? undefined : enableNotifications}
+                disabled={notifStatus === 'loading' || notifStatus === 'denied'}
+                className={`rounded-xl border px-4 py-2 text-sm transition ${
+                  notifStatus === 'granted'
+                    ? 'cursor-default border-green-200 bg-green-50 text-green-700'
+                    : notifStatus === 'denied'
+                    ? 'cursor-not-allowed border-red-200 bg-red-50 text-red-600'
+                    : notifStatus === 'loading'
+                    ? 'cursor-wait border-slate-200 bg-white text-slate-400'
+                    : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {notifStatus === 'granted'
+                  ? 'Уведомления включены ✓'
+                  : notifStatus === 'denied'
+                  ? 'Уведомления заблокированы'
+                  : notifStatus === 'loading'
+                  ? 'Подключение...'
+                  : 'Включить уведомления'}
+              </button>
+            )}
+            <button
+              onClick={logout}
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
+            >
+              Выйти
+            </button>
+          </div>
         </header>
 
         <div className="flex flex-wrap gap-2">
