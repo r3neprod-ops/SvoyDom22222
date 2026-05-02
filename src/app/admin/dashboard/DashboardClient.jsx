@@ -102,6 +102,12 @@ export default function DashboardClient({ user }) {
   const [editName, setEditName] = useState('');
   const editInputRef = useRef(null);
 
+  // Employee create modal
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createForm, setCreateForm] = useState({ name: '', username: '', password: '', confirmPassword: '' });
+  const [createError, setCreateError] = useState('');
+  const [createLoading, setCreateLoading] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setNotifStatus(Notification.permission);
@@ -274,6 +280,64 @@ export default function DashboardClient({ user }) {
     if (e.key === 'Escape') cancelEditEmployee();
   };
 
+  // --- Employee create ---
+
+  const openCreateModal = () => {
+    setCreateForm({ name: '', username: '', password: '', confirmPassword: '' });
+    setCreateError('');
+    setShowCreateModal(true);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setCreateError('');
+  };
+
+  const submitCreateEmployee = async (e) => {
+    e.preventDefault();
+    const { name, username, password, confirmPassword } = createForm;
+    if (!name.trim() || !username.trim() || !password || !confirmPassword) {
+      setCreateError('Все поля обязательны');
+      return;
+    }
+    if (password.length < 4) {
+      setCreateError('Пароль минимум 4 символа');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setCreateError('Пароли не совпадают');
+      return;
+    }
+    setCreateLoading(true);
+    setCreateError('');
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), username: username.trim(), password }),
+      });
+      const data = await res.json();
+      if (!data.ok) { setCreateError(data.message || 'Ошибка создания'); return; }
+      setEmployees((prev) => [...prev, data.user]);
+      closeCreateModal();
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // --- Employee delete ---
+
+  const deleteEmployee = async (emp) => {
+    if (!confirm(`Вы уверены? Сотрудник "${emp.name}" будет удалён.`)) return;
+    const res = await fetch(`/api/users/${emp.id}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      setEmployees((prev) => prev.filter((e) => e.id !== emp.id));
+    } else {
+      alert(data.message || 'Ошибка удаления');
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-900 sm:px-6">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -444,71 +508,175 @@ export default function DashboardClient({ user }) {
 
         {/* ── Employees tab (admin only) ── */}
         {isAdmin && activeTab === 'employees' && (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            {loading ? (
-              <div className="py-16 text-center text-slate-500">Загрузка...</div>
-            ) : employees.length === 0 ? (
-              <div className="py-16 text-center text-slate-500">Сотрудников нет.</div>
-            ) : (
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
-                  <tr>
-                    <th className="p-3">ID</th>
-                    <th className="p-3">Имя</th>
-                    <th className="p-3">Действия</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {employees.map((emp) => (
-                    <tr key={emp.id} className="border-t border-slate-100">
-                      <td className="p-3 text-slate-400">#{emp.id}</td>
-                      <td className="p-3">
-                        {editingEmployee === emp.id ? (
-                          <input
-                            ref={editInputRef}
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            onKeyDown={(e) => handleEditKey(e, emp.id)}
-                            className="rounded-lg border border-slate-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                          />
-                        ) : (
-                          <span className="font-medium">{emp.name}</span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {editingEmployee === emp.id ? (
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => saveEmployeeName(emp.id)}
-                              className="rounded-lg border border-green-200 bg-green-50 px-3 py-1 text-xs text-green-700 transition hover:bg-green-100"
-                            >
-                              ✓
-                            </button>
-                            <button
-                              onClick={cancelEditEmployee}
-                              className="rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-500 transition hover:bg-slate-100"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => startEditEmployee(emp)}
-                            className="rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-600 transition hover:bg-slate-100"
-                          >
-                            ✏️ Переименовать
-                          </button>
-                        )}
-                      </td>
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <button
+                onClick={openCreateModal}
+                className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700"
+              >
+                + Добавить сотрудника
+              </button>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              {loading ? (
+                <div className="py-16 text-center text-slate-500">Загрузка...</div>
+              ) : employees.length === 0 ? (
+                <div className="py-16 text-center text-slate-500">Сотрудников нет.</div>
+              ) : (
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th className="p-3">ID</th>
+                      <th className="p-3">Имя</th>
+                      <th className="p-3">Логин</th>
+                      <th className="p-3">Действия</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    {employees.map((emp) => (
+                      <tr key={emp.id} className="border-t border-slate-100">
+                        <td className="p-3 text-slate-400">#{emp.id}</td>
+                        <td className="p-3">
+                          {editingEmployee === emp.id ? (
+                            <input
+                              ref={editInputRef}
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              onKeyDown={(e) => handleEditKey(e, emp.id)}
+                              className="rounded-lg border border-slate-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                            />
+                          ) : (
+                            <span className="font-medium">{emp.name}</span>
+                          )}
+                        </td>
+                        <td className="p-3 text-slate-500">{emp.username || '—'}</td>
+                        <td className="p-3">
+                          {editingEmployee === emp.id ? (
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => saveEmployeeName(emp.id)}
+                                className="rounded-lg border border-green-200 bg-green-50 px-3 py-1 text-xs text-green-700 transition hover:bg-green-100"
+                              >
+                                ✓
+                              </button>
+                              <button
+                                onClick={cancelEditEmployee}
+                                className="rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-500 transition hover:bg-slate-100"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => startEditEmployee(emp)}
+                                className="rounded-lg border border-slate-200 px-3 py-1 text-xs text-slate-600 transition hover:bg-slate-100"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                onClick={() => deleteEmployee(emp)}
+                                className="rounded-lg border border-red-200 px-3 py-1 text-xs text-red-600 transition hover:bg-red-50"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         )}
 
       </div>
+
+      {/* ── Create employee modal ── */}
+      {showCreateModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) closeCreateModal(); }}
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="font-semibold">Новый сотрудник</h2>
+              <button
+                onClick={closeCreateModal}
+                className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={submitCreateEmployee} className="space-y-4 px-5 py-5">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Имя</label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Иван Иванов"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Логин</label>
+                <input
+                  type="text"
+                  value={createForm.username}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, username: e.target.value }))}
+                  placeholder="ivan"
+                  autoComplete="off"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Пароль</label>
+                <input
+                  type="password"
+                  value={createForm.password}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                  placeholder="Минимум 4 символа"
+                  autoComplete="new-password"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-slate-600">Подтверждение пароля</label>
+                <input
+                  type="password"
+                  value={createForm.confirmPassword}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, confirmPassword: e.target.value }))}
+                  placeholder="Повторите пароль"
+                  autoComplete="new-password"
+                  className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+              {createError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{createError}</p>
+              )}
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={closeCreateModal}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+                >
+                  Отмена
+                </button>
+                <button
+                  type="submit"
+                  disabled={createLoading}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700 disabled:opacity-50"
+                >
+                  {createLoading ? 'Создание...' : 'Создать'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── Comments modal ── */}
       {commentModal && (

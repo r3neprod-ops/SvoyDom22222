@@ -41,7 +41,7 @@ export async function GET(request) {
   );
 
   const employees = user.role === 'admin'
-    ? await sql`SELECT id, name FROM users WHERE role = 'employee'`
+    ? await sql`SELECT id, name, username FROM users WHERE role = 'employee' ORDER BY id`
     : [];
 
   return NextResponse.json({ ok: true, leads, employees });

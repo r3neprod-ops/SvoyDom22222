@@ -2,6 +2,30 @@ import { NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/admin/auth';
 import { getSql, ensureSchema } from '@/lib/admin/db';
 
+export async function DELETE(request, { params }) {
+  const user = await getAuthUser();
+  if (!user) return NextResponse.json({ ok: false }, { status: 401 });
+  if (user.role !== 'admin') return NextResponse.json({ ok: false }, { status: 403 });
+
+  const id = Number(params.id);
+  if (!id) return NextResponse.json({ ok: false }, { status: 400 });
+  if (id === user.id) {
+    return NextResponse.json({ ok: false, message: 'Нельзя удалить себя' }, { status: 400 });
+  }
+
+  await ensureSchema();
+  const sql = getSql();
+
+  const [target] = await sql`SELECT role FROM users WHERE id = ${id}`;
+  if (!target) return NextResponse.json({ ok: false, message: 'Пользователь не найден' }, { status: 404 });
+  if (target.role === 'admin') {
+    return NextResponse.json({ ok: false, message: 'Нельзя удалить администратора' }, { status: 400 });
+  }
+
+  await sql`DELETE FROM users WHERE id = ${id}`;
+  return NextResponse.json({ ok: true });
+}
+
 export async function PATCH(request, { params }) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ ok: false }, { status: 401 });
