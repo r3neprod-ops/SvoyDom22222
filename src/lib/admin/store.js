@@ -1,76 +1,36 @@
-import fs from 'fs';
-import path from 'path';
+import { getDb } from './db';
 
-const DB_DIR = path.join(process.cwd(), 'database');
-const DB_FILE = path.join(DB_DIR, 'db.json');
-const EMPTY_DB = { leads: [] };
-
-function ensureDbFile() {
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(DB_FILE)) {
-    fs.writeFileSync(DB_FILE, JSON.stringify(EMPTY_DB, null, 2), 'utf8');
-  }
-}
-
-export function readDb() {
-  try {
-    ensureDbFile();
-    const raw = fs.readFileSync(DB_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-
-    if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.leads)) {
-      return { ...EMPTY_DB };
-    }
-
-    return { leads: parsed.leads };
-  } catch (error) {
-    console.error('Failed to read db.json:', error);
-    return { ...EMPTY_DB };
-  }
-}
-
-export function writeDb(db) {
-  ensureDbFile();
-  const safeDb = {
-    leads: Array.isArray(db?.leads) ? db.leads : [],
-  };
-  fs.writeFileSync(DB_FILE, JSON.stringify(safeDb, null, 2), 'utf8');
-}
-
-export function getLeads() {
-  const db = readDb();
-  return [...db.leads].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
-}
-
-function pickName(payload) {
-  const answers = payload?.answers && typeof payload.answers === 'object' ? payload.answers : {};
-  return payload?.name || payload?.fullName || payload?.clientName || answers?.name || '';
-}
-
-function pickPhone(payload) {
-  const answers = payload?.answers && typeof payload.answers === 'object' ? payload.answers : {};
-  return payload?.phone || payload?.tel || answers?.phone || '';
+function buildMessage(answers) {
+  if (!answers || typeof answers !== 'object') return '';
+  const parts = [];
+  if (answers.propertyType)    parts.push(`Тип: ${answers.propertyType}`);
+  if (answers.apartmentType)   parts.push(`Планировка: ${answers.apartmentType}`);
+  if (answers.budgetPreset)    parts.push(`Бюджет: ${answers.budgetPreset}`);
+  if (answers.downPaymentType) parts.push(`Взнос: ${answers.downPaymentType}`);
+  if (answers.telegram)        parts.push(`Telegram: ${answers.telegram}`);
+  return parts.join(', ');
 }
 
 export function addLead(payload) {
-  const db = readDb();
-  const now = new Date().toISOString();
-  const maxId = db.leads.reduce((acc, lead) => (typeof lead?.id === 'number' && lead.id > acc ? lead.id : acc), 0);
-  const lead = {
-    id: maxId + 1,
-    createdAt: now,
-    updatedAt: now,
-    name: pickName(payload),
-    phone: pickPhone(payload),
-    formData: payload,
-    source: payload?.source || payload?.utm_source || 'site-form',
-    status: 'Новый',
-  };
+  const db = getDb();
+  const answers = payload?.answers && typeof payload.answers === 'object' ? payload.answers : {};
+  const name    = payload?.name  || answers?.name  || '';
+  const phone   = payload?.phone || answers?.phone || '';
+  const message = buildMessage(answers);
 
-  db.leads.unshift(lead);
-  writeDb(db);
-  return lead;
+  const result = db.prepare(
+    'INSERT INTO leads (name, phone, message, status) VALUES (?, ?, ?, ?)'
+  ).run(name, phone, message, 'new');
+
+  return { id: result.lastInsertRowid, name, phone, message, status: 'new' };
+}
+
+export function getLeads() {
+  const db = getDb();
+  return db.prepare(`
+    SELECT l.*, u.name AS assigned_to_name
+    FROM leads l
+    LEFT JOIN users u ON l.assigned_to = u.id
+    ORDER BY l.created_at DESC
+  `).all();
 }
