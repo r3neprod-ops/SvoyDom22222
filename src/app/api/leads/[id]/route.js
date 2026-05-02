@@ -31,7 +31,7 @@ export async function PATCH(request, { params }) {
   const values = Object.values(updates);
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
   values.push(id);
-  await sql(`UPDATE leads SET ${setClauses} WHERE id = $${values.length}`, values);
+  await sql.query(`UPDATE leads SET ${setClauses} WHERE id = $${values.length}`, values);
 
   return NextResponse.json({ ok: true });
 }

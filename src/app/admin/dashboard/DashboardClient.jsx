@@ -32,15 +32,20 @@ export default function DashboardClient({ user }) {
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
-    const url = filter ? `/api/leads?status=${filter}` : '/api/leads';
-    const res = await fetch(url);
-    if (res.status === 401) { router.push('/admin/login'); return; }
-    const data = await res.json();
-    if (data.ok) {
-      setLeads(data.leads);
-      setEmployees(data.employees || []);
+    try {
+      const url = filter ? `/api/leads?status=${filter}` : '/api/leads';
+      const res = await fetch(url);
+      if (res.status === 401) { router.push('/admin/login'); return; }
+      const data = await res.json();
+      if (data.ok) {
+        setLeads(data.leads);
+        setEmployees(data.employees || []);
+      }
+    } catch (err) {
+      console.error('fetchLeads error:', err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [filter, router]);
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);

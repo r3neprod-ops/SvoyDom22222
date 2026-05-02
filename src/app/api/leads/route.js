@@ -27,7 +27,7 @@ export async function GET(request) {
   }
 
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-  const leads = await sql(
+  const leads = await sql.query(
     `SELECT l.id, l.name, l.phone, l.message, l.status, l.assigned_to, l.created_at,
             u.name AS assigned_to_name
      FROM leads l
