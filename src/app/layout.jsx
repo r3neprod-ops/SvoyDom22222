@@ -4,16 +4,18 @@ import './globals.css';
 export const metadata = {
   title: 'Покупка недвижимости в Луганске под ключ — под ваш бюджет',
   description: 'Полное сопровождение покупки недвижимости в Луганске: подберём вариант под ваш бюджет и проведём за руку от первого шага до сделки. Всю суету берём на себя.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'СвойДом',
+    statusBarStyle: 'default',
+  },
   icons: {
     icon: '/favicon.ico',
     shortcut: '/favicon.ico',
-    apple: '/apple-touch-icon.png',
+    apple: '/icon-192.png',
     other: [
-      {
-        rel: 'icon',
-        url: '/favicon-96x96.png',
-        sizes: '96x96',
-      },
+      { rel: 'icon', url: '/favicon-96x96.png', sizes: '96x96' },
     ],
   },
 };
@@ -21,11 +23,19 @@ export const metadata = {
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#000000',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ru">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-title" content="СвойДом" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body>
         {children}
 
@@ -51,6 +61,10 @@ export default function RootLayout({ children }) {
             />
           </div>
         </noscript>
+
+        <Script id="register-sw" strategy="afterInteractive">
+          {`if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }`}
+        </Script>
       </body>
     </html>
   );
