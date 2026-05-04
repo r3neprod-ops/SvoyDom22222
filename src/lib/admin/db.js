@@ -55,6 +55,18 @@ export async function ensureSchema() {
     )
   `;
 
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS leads_count INTEGER DEFAULT 0`;
+  await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_assigned_at TIMESTAMP`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    )
+  `;
+  await sql`INSERT INTO settings (key, value) VALUES ('auto_assign', 'true') ON CONFLICT (key) DO NOTHING`;
+
   const [{ count }] = await sql`SELECT COUNT(*)::int AS count FROM users`;
   if (count === 0) {
     await sql`

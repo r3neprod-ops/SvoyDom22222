@@ -1,48 +1,70 @@
 import { NextResponse } from 'next/server';
+import { unstable_cache } from 'next/cache';
 import { getAuthUser } from '@/lib/admin/auth';
 import { getSql, ensureSchema } from '@/lib/admin/db';
 
-export const dynamic = 'force-dynamic';
+const fetchLeadsData = unstable_cache(
+  async (userId, userRole, status) => {
+    const sql = getSql();
+    const conditions = [];
+    const params = [];
+
+    if (userRole === 'employee') {
+      params.push(userId);
+      conditions.push(`l.assigned_to = $${params.length}`);
+    }
+    if (status) {
+      params.push(status);
+      conditions.push(`l.status = $${params.length}`);
+    }
+
+    const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+    const leads = await sql.query(
+      `SELECT l.id, l.name, l.phone, l.message, l.status, l.assigned_to, l.created_at,
+              u.name AS assigned_to_name,
+              COUNT(c.id)::int AS comment_count,
+              (SELECT text FROM comments WHERE lead_id = l.id ORDER BY created_at DESC LIMIT 1) AS last_comment_text
+       FROM leads l
+       LEFT JOIN users u ON l.assigned_to = u.id
+       LEFT JOIN comments c ON c.lead_id = l.id
+       ${where}
+       GROUP BY l.id, u.name
+       ORDER BY l.created_at DESC`,
+      params
+    );
+
+    const employees = userRole === 'admin'
+      ? await sql`
+          SELECT u.id, u.name, u.username, u.is_active, u.leads_count,
+                 COUNT(l.id) FILTER (WHERE l.status IN ('new', 'in_progress'))::int AS active_leads_count
+          FROM users u
+          LEFT JOIN leads l ON l.assigned_to = u.id
+          WHERE u.role = 'employee'
+          GROUP BY u.id
+          ORDER BY u.id
+        `
+      : [];
+
+    return { leads, employees };
+  },
+  ['leads-data'],
+  { revalidate: 30, tags: ['leads'] }
+);
 
 export async function GET(request) {
   const user = await getAuthUser();
   if (!user) return NextResponse.json({ ok: false }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get('status');
+  const status = searchParams.get('status') || '';
 
   await ensureSchema();
-  const sql = getSql();
 
-  const conditions = [];
-  const params = [];
-
-  if (user.role === 'employee') {
-    params.push(user.id);
-    conditions.push(`l.assigned_to = $${params.length}`);
-  }
-  if (status) {
-    params.push(status);
-    conditions.push(`l.status = $${params.length}`);
-  }
-
-  const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-  const leads = await sql.query(
-    `SELECT l.id, l.name, l.phone, l.message, l.status, l.assigned_to, l.created_at,
-            u.name AS assigned_to_name,
-            COUNT(c.id)::int AS comment_count
-     FROM leads l
-     LEFT JOIN users u ON l.assigned_to = u.id
-     LEFT JOIN comments c ON c.lead_id = l.id
-     ${where}
-     GROUP BY l.id, u.name
-     ORDER BY l.created_at DESC`,
-    params
+  const { leads, employees } = await fetchLeadsData(
+    user.role === 'employee' ? user.id : 0,
+    user.role,
+    status
   );
-
-  const employees = user.role === 'admin'
-    ? await sql`SELECT id, name, username FROM users WHERE role = 'employee' ORDER BY id`
-    : [];
 
   return NextResponse.json({ ok: true, leads, employees });
 }

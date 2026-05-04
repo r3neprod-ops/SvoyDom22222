@@ -375,14 +375,14 @@ export default function LeadFormSection() {
             required
           />
           <span>
-            Даю согласие на обработку персональных данных и подтверждаю, что ознакомлен(а) с{' '}
+            Нажимая кнопку, я даю согласие на обработку персональных данных в соответствии с{' '}
             <Link
               href="/privacy-policy"
               target="_blank"
               rel="noreferrer"
               className="underline decoration-[color:var(--accent2)] underline-offset-2 transition hover:text-[color:var(--accent2)]"
             >
-              Политикой обработки персональных данных
+              Политикой конфиденциальности
             </Link>
             .
           </span>

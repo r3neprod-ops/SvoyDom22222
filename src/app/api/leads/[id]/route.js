@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
 import { getAuthUser } from '@/lib/admin/auth';
 import { getSql, ensureSchema } from '@/lib/admin/db';
 
@@ -32,6 +33,7 @@ export async function PATCH(request, { params }) {
   const setClauses = keys.map((k, i) => `${k} = $${i + 1}`).join(', ');
   values.push(id);
   await sql.query(`UPDATE leads SET ${setClauses} WHERE id = $${values.length}`, values);
+  revalidateTag('leads');
 
   return NextResponse.json({ ok: true });
 }

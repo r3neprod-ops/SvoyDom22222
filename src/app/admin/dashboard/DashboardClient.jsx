@@ -108,6 +108,21 @@ export default function DashboardClient({ user }) {
   const [createError, setCreateError] = useState('');
   const [createLoading, setCreateLoading] = useState(false);
 
+  // Export modal
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportDateFrom, setExportDateFrom] = useState('');
+  const [exportDateTo, setExportDateTo] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
+
+  // Distribution tab
+  const [autoAssign, setAutoAssign] = useState(true);
+  const [settingsLoading, setSettingsLoading] = useState(false);
+
+  // Close reason modal
+  const [closeReasonModal, setCloseReasonModal] = useState(null); // { leadId, leadName }
+  const [closeReasonText, setCloseReasonText] = useState('');
+  const [closeReasonLoading, setCloseReasonLoading] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setNotifStatus(Notification.permission);
@@ -127,6 +142,17 @@ export default function DashboardClient({ user }) {
       commentsEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [comments]);
+
+  useEffect(() => {
+    if (activeTab !== 'distribution' || !isAdmin) return;
+    setSettingsLoading(true);
+    fetch('/api/settings')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) setAutoAssign(data.settings.auto_assign === 'true');
+      })
+      .finally(() => setSettingsLoading(false));
+  }, [activeTab, isAdmin]);
 
   const enableNotifications = async () => {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
@@ -180,6 +206,32 @@ export default function DashboardClient({ user }) {
       body: JSON.stringify({ status }),
     });
     fetchLeads();
+  };
+
+  const openCloseReason = (lead) => {
+    setCloseReasonModal({ leadId: lead.id, leadName: lead.name || `Лид #${lead.id}` });
+    setCloseReasonText('');
+  };
+
+  const submitCloseReason = async () => {
+    if (!closeReasonText.trim() || !closeReasonModal) return;
+    setCloseReasonLoading(true);
+    try {
+      await fetch(`/api/leads/${closeReasonModal.leadId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: `🔒 Закрыто: ${closeReasonText.trim()}` }),
+      });
+      await fetch(`/api/leads/${closeReasonModal.leadId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'closed' }),
+      });
+      setCloseReasonModal(null);
+      fetchLeads();
+    } finally {
+      setCloseReasonLoading(false);
+    }
   };
 
   const assignLead = async (id, value) => {
@@ -325,6 +377,56 @@ export default function DashboardClient({ user }) {
     }
   };
 
+  // --- Distribution ---
+
+  const toggleAutoAssign = async (value) => {
+    setAutoAssign(value);
+    await fetch('/api/settings', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ auto_assign: String(value) }),
+    });
+  };
+
+  const toggleAvailability = async (emp) => {
+    const res = await fetch(`/api/users/${emp.id}/availability`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !emp.is_active }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      setEmployees((prev) =>
+        prev.map((e) => (e.id === emp.id ? { ...e, is_active: !emp.is_active } : e))
+      );
+    }
+  };
+
+  // --- Export ---
+
+  const downloadExport = async ({ dateFrom, dateTo } = {}) => {
+    setExportLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.set('date_from', dateFrom);
+      if (dateTo) params.set('date_to', dateTo);
+      const url = `/api/leads/export${params.toString() ? '?' + params.toString() : ''}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const a = document.createElement('a');
+      const from = dateFrom || 'all';
+      const to = dateTo || 'all';
+      a.href = URL.createObjectURL(blob);
+      a.download = dateFrom || dateTo ? `leads_${from}_${to}.xlsx` : 'leads_all.xlsx';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setShowExportModal(false);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
   // --- Employee delete ---
 
   const deleteEmployee = async (emp) => {
@@ -389,6 +491,7 @@ export default function DashboardClient({ user }) {
             {[
               { key: 'leads', label: 'Лиды' },
               { key: 'employees', label: 'Сотрудники' },
+              { key: 'distribution', label: 'Распределение' },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -408,25 +511,64 @@ export default function DashboardClient({ user }) {
         {/* ── Leads tab ── */}
         {(!isAdmin || activeTab === 'leads') && (
           <>
-            <div className="flex flex-wrap gap-2">
-              {FILTER_OPTIONS.map(({ value, label }) => (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap gap-2">
+                {FILTER_OPTIONS.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    onClick={() => setFilter(value)}
+                    className={`rounded-xl px-4 py-2 text-sm transition ${
+                      filter === value
+                        ? 'bg-slate-900 text-white'
+                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {isAdmin && (
                 <button
-                  key={value}
-                  onClick={() => setFilter(value)}
-                  className={`rounded-xl px-4 py-2 text-sm transition ${
-                    filter === value
-                      ? 'bg-slate-900 text-white'
-                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
-                  }`}
+                  onClick={() => setShowExportModal(true)}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100"
                 >
-                  {label}
+                  📥 Экспорт
                 </button>
-              ))}
+              )}
             </div>
 
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               {loading ? (
-                <div className="py-16 text-center text-slate-500">Загрузка...</div>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
+                      <tr>
+                        <th className="p-3">Дата</th>
+                        <th className="p-3">Имя</th>
+                        <th className="p-3">Телефон</th>
+                        <th className="p-3">Сообщение</th>
+                        <th className="p-3">Статус</th>
+                        {isAdmin && <th className="p-3">Назначен</th>}
+                        <th className="p-3">Комментарии</th>
+                        <th className="p-3">Действия</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <tr key={i} className="border-t border-slate-100 align-top">
+                          <td className="p-3"><div className="h-4 w-24 animate-pulse rounded bg-gray-200" /></td>
+                          <td className="p-3"><div className="h-4 w-28 animate-pulse rounded bg-gray-200" /></td>
+                          <td className="p-3"><div className="h-4 w-28 animate-pulse rounded bg-gray-200" /></td>
+                          <td className="p-3"><div className="h-4 w-48 animate-pulse rounded bg-gray-200" /></td>
+                          <td className="p-3"><div className="h-5 w-16 animate-pulse rounded-full bg-gray-200" /></td>
+                          {isAdmin && <td className="p-3"><div className="h-6 w-24 animate-pulse rounded-lg bg-gray-200" /></td>}
+                          <td className="p-3"><div className="h-4 w-36 animate-pulse rounded bg-gray-200" /></td>
+                          <td className="p-3"><div className="h-6 w-32 animate-pulse rounded-lg bg-gray-200" /></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               ) : leads.length === 0 ? (
                 <div className="py-16 text-center text-slate-500">Лидов нет.</div>
               ) : (
@@ -440,6 +582,7 @@ export default function DashboardClient({ user }) {
                         <th className="p-3">Сообщение</th>
                         <th className="p-3">Статус</th>
                         {isAdmin && <th className="p-3">Назначен</th>}
+                        <th className="p-3">Комментарии</th>
                         <th className="p-3">Действия</th>
                       </tr>
                     </thead>
@@ -448,7 +591,17 @@ export default function DashboardClient({ user }) {
                         <tr key={lead.id} className="border-t border-slate-100 align-top">
                           <td className="whitespace-nowrap p-3 text-slate-500">{formatDate(lead.created_at)}</td>
                           <td className="p-3 font-medium">{lead.name || '—'}</td>
-                          <td className="whitespace-nowrap p-3">{lead.phone || '—'}</td>
+                          <td className="whitespace-nowrap p-3">
+                            {lead.phone ? (
+                              <a
+                                href={`tel:${lead.phone}`}
+                                className="flex items-center gap-1 text-inherit hover:text-blue-600 transition-colors"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                📞 {lead.phone}
+                              </a>
+                            ) : '—'}
+                          </td>
                           <td className="max-w-xs p-3 text-slate-600">{formatMessage(lead.message)}</td>
                           <td className="p-3">
                             <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_COLORS[lead.status] ?? 'bg-slate-100 text-slate-600'}`}>
@@ -469,18 +622,31 @@ export default function DashboardClient({ user }) {
                               </select>
                             </td>
                           )}
+                          <td className="max-w-[200px] p-3">
+                            <button
+                              onClick={() => openComments(lead)}
+                              className="group w-full text-left"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600 group-hover:bg-slate-200">
+                                  💬 {lead.comment_count || 0}
+                                </span>
+                              </div>
+                              {lead.last_comment_text && (
+                                <p className="mt-1 text-xs text-slate-500 line-clamp-2 group-hover:text-slate-700">
+                                  {lead.last_comment_text.length > 50
+                                    ? lead.last_comment_text.slice(0, 50) + '…'
+                                    : lead.last_comment_text}
+                                </p>
+                              )}
+                            </button>
+                          </td>
                           <td className="p-3">
                             <div className="flex flex-wrap gap-1">
-                              <button
-                                onClick={() => openComments(lead)}
-                                className="rounded-lg border border-slate-200 px-2 py-1 text-xs transition hover:bg-slate-100"
-                              >
-                                {lead.comment_count > 0 ? `💬 ${lead.comment_count}` : '💬'}
-                              </button>
                               {STATUSES.filter((s) => s !== lead.status).map((s) => (
                                 <button
                                   key={s}
-                                  onClick={() => updateStatus(lead.id, s)}
+                                  onClick={() => s === 'closed' ? openCloseReason(lead) : updateStatus(lead.id, s)}
                                   className="rounded-lg border border-slate-200 px-2 py-1 text-xs transition hover:bg-slate-100"
                                 >
                                   → {STATUS_LABELS[s]}
@@ -506,6 +672,93 @@ export default function DashboardClient({ user }) {
           </>
         )}
 
+        {/* ── Distribution tab (admin only) ── */}
+        {isAdmin && activeTab === 'distribution' && (
+          <div className="space-y-6">
+            {/* Auto-assign toggle */}
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+              <div>
+                <p className="text-sm font-medium text-slate-800">Автораспределение лидов</p>
+                <p className="text-xs text-slate-500">Round Robin — новые лиды назначаются автоматически</p>
+              </div>
+              <button
+                onClick={() => toggleAutoAssign(!autoAssign)}
+                disabled={settingsLoading}
+                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${
+                  autoAssign ? 'bg-green-500' : 'bg-slate-300'
+                } disabled:opacity-50`}
+              >
+                <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${autoAssign ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {/* Employees table */}
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              {employees.length === 0 ? (
+                <div className="py-10 text-center text-sm text-slate-500">Сотрудников нет.</div>
+              ) : (
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th className="p-3">Имя</th>
+                      <th className="p-3">Активных лидов</th>
+                      <th className="p-3">Статус</th>
+                      <th className="p-3">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employees.map((emp) => (
+                      <tr key={emp.id} className="border-t border-slate-100">
+                        <td className="p-3 font-medium">{emp.name}</td>
+                        <td className="p-3 text-slate-600">{emp.active_leads_count ?? 0}</td>
+                        <td className="p-3">
+                          {emp.is_active ? (
+                            <span className="rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">🟢 Активен</span>
+                          ) : (
+                            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">⏸ Пауза</span>
+                          )}
+                        </td>
+                        <td className="p-3">
+                          <button
+                            onClick={() => toggleAvailability(emp)}
+                            className={`rounded-lg border px-3 py-1 text-xs transition ${
+                              emp.is_active
+                                ? 'border-slate-200 text-slate-600 hover:bg-slate-100'
+                                : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                            }`}
+                          >
+                            {emp.is_active ? 'Пауза' : 'Активировать'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Statistics */}
+            {employees.length > 0 && (() => {
+              const total = employees.reduce((s, e) => s + (e.leads_count || 0), 0);
+              return total > 0 ? (
+                <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Статистика назначений</p>
+                  <div className="flex flex-wrap gap-3">
+                    {employees.map((emp) => {
+                      const pct = total > 0 ? Math.round(((emp.leads_count || 0) / total) * 100) : 0;
+                      return (
+                        <span key={emp.id} className="rounded-lg bg-slate-50 px-3 py-1.5 text-sm text-slate-700">
+                          {emp.name}: <strong>{emp.leads_count || 0}</strong> лидов ({pct}%)
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null;
+            })()}
+          </div>
+        )}
+
         {/* ── Employees tab (admin only) ── */}
         {isAdmin && activeTab === 'employees' && (
           <div className="space-y-4">
@@ -519,7 +772,26 @@ export default function DashboardClient({ user }) {
             </div>
             <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
               {loading ? (
-                <div className="py-16 text-center text-slate-500">Загрузка...</div>
+                <table className="min-w-full text-left text-sm">
+                  <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
+                    <tr>
+                      <th className="p-3">ID</th>
+                      <th className="p-3">Имя</th>
+                      <th className="p-3">Логин</th>
+                      <th className="p-3">Действия</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <tr key={i} className="border-t border-slate-100">
+                        <td className="p-3"><div className="h-4 w-6 animate-pulse rounded bg-gray-200" /></td>
+                        <td className="p-3"><div className="h-4 w-32 animate-pulse rounded bg-gray-200" /></td>
+                        <td className="p-3"><div className="h-4 w-20 animate-pulse rounded bg-gray-200" /></td>
+                        <td className="p-3"><div className="h-6 w-16 animate-pulse rounded-lg bg-gray-200" /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               ) : employees.length === 0 ? (
                 <div className="py-16 text-center text-slate-500">Сотрудников нет.</div>
               ) : (
@@ -674,6 +946,113 @@ export default function DashboardClient({ user }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Close reason modal ── */}
+      {closeReasonModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setCloseReasonModal(null); }}
+        >
+          <div className="w-full max-w-md rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h2 className="font-semibold">Причина закрытия</h2>
+                <p className="text-xs text-slate-500">{closeReasonModal.leadName}</p>
+              </div>
+              <button
+                onClick={() => setCloseReasonModal(null)}
+                className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4 px-5 py-5">
+              <textarea
+                autoFocus
+                value={closeReasonText}
+                onChange={(e) => setCloseReasonText(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitCloseReason(); } }}
+                placeholder="Напишите причину закрытия..."
+                rows={3}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400 resize-none"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setCloseReasonModal(null)}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 transition hover:bg-slate-100"
+                >
+                  Отмена
+                </button>
+                <button
+                  onClick={submitCloseReason}
+                  disabled={!closeReasonText.trim() || closeReasonLoading}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700 disabled:opacity-40"
+                >
+                  {closeReasonLoading ? 'Закрытие...' : 'Закрыть лид'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Export modal ── */}
+      {showExportModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setShowExportModal(false); }}
+        >
+          <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <h2 className="font-semibold">Экспорт в Excel</h2>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4 px-5 py-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Дата от</label>
+                  <input
+                    type="date"
+                    value={exportDateFrom}
+                    onChange={(e) => setExportDateFrom(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Дата до</label>
+                  <input
+                    type="date"
+                    value={exportDateTo}
+                    onChange={(e) => setExportDateTo(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2 pt-1">
+                <button
+                  onClick={() => downloadExport({ dateFrom: exportDateFrom, dateTo: exportDateTo })}
+                  disabled={exportLoading}
+                  className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white transition hover:bg-slate-700 disabled:opacity-50"
+                >
+                  {exportLoading ? 'Загрузка...' : '📥 Скачать'}
+                </button>
+                <button
+                  onClick={() => downloadExport()}
+                  disabled={exportLoading}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-700 transition hover:bg-slate-100 disabled:opacity-50"
+                >
+                  Скачать всё
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

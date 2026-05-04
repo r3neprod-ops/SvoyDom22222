@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import brand from '@/data/brand';
 import Button from '@/components/ui/Button';
 import Container from '@/components/ui/Container';
@@ -35,8 +34,6 @@ export default function Header() {
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            {/* TEMP: admin preview link, remove before production */}
-            <Link href="/admin" className="focus-ring rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm font-medium text-[color:var(--text)] hover:bg-white">Админ</Link>
             <Button as="a" href="#lead-form" variant="primary" className="!px-5">Получить консультацию</Button>
             <Button as="a" href={`tel:${brand.phoneHref}`} variant="secondary" className="!px-5">Позвонить</Button>
             <span
@@ -81,10 +78,6 @@ export default function Header() {
               <a href={brand.telegramUrl} target="_blank" rel="noreferrer" className="focus-ring rounded-lg py-1 text-sm" onClick={() => setOpen(false)}>
                 Telegram
               </a>
-              {/* TEMP: admin preview link, remove before production */}
-              <Link href="/admin" className="focus-ring rounded-lg border border-[color:var(--border)] px-3 py-2 text-sm" onClick={() => setOpen(false)}>
-                Админ
-              </Link>
               <a href={`tel:${brand.phoneHref}`} className="focus-ring rounded-lg py-1 text-sm" onClick={() => setOpen(false)}>
                 {brand.phoneDisplay}
               </a>
