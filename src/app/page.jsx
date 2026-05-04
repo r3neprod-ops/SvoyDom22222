@@ -186,6 +186,7 @@ export default function HomePage() {
               <div>
                 <a href={`tel:${brand.phoneHref}`} className="focus-ring block rounded-lg text-2xl tracking-tight">{brand.phoneDisplay}</a>
                 <a href={brand.telegramUrl} target="_blank" rel="noreferrer" className="focus-ring mt-2 inline-block rounded-lg text-[color:var(--accent2)]">Написать в Telegram</a>
+                <a href={`mailto:${brand.email}`} className="focus-ring mt-1 block rounded-lg text-sm text-[color:var(--muted)] hover:text-[color:var(--accent2)]">{brand.email}</a>
               </div>
               <div className="text-sm text-[color:var(--muted)]">
                 <p>{brand.ipLabel}</p>
