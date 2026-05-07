@@ -46,12 +46,22 @@ export default function HomePage() {
                 boxShadow: '0 18px 50px rgba(17,24,39,0.10)',
               }}
             >
-              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Я помогу тебе оформить ипотеку и выбрать идеальный ЖК</p>
-              <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] md:text-6xl">Квартира в ипотеку под 2%</h1>
-              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.72)]">Помогу разобраться, выбрать квартиру и оформить ипотеку — доведу до сделки.</p>
-              <p className="mt-3 text-sm text-[rgba(17,24,39,0.72)]">Для вас это бесплатно: работаю по партнёрской программе с застройщиками Луганска.</p>
+              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Новостройки Луганска — подбор и ипотека бесплатно</p>
+              <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] md:text-6xl">Квартиры в новостройках Луганска от 3,8 млн ₽</h1>
+              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.72)]">Подберем квартиру и одобрим ипотеку под 2% за 24 часа.</p>
+              <ul className="mt-4 space-y-2 text-sm text-[rgba(17,24,39,0.72)]">
+                <li className="flex items-center gap-2">
+                  <span className="text-[color:var(--accent2)]">✓</span> Без первоначального взноса — варианты есть
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[color:var(--accent2)]">✓</span> Работаем с военными и материнскими сертификатами
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-[color:var(--accent2)]">✓</span> Подбор квартиры за 1 день — бесплатно
+                </li>
+              </ul>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button as="a" href="#lead-form">Получить консультацию</Button>
+                <Button as="a" href="#lead-form">Получить подборку квартир</Button>
                 <Button
                   as="a"
                   href={brand.telegramUrl}
@@ -160,7 +170,30 @@ export default function HomePage() {
         </Container>
       </section>
 
-      <section id="faq" className="bg-[color:var(--bg2)] py-20 md:py-28">
+      <section id="trust" className="bg-[color:var(--bg2)] py-20 md:py-28">
+        <Container>
+          <SectionHeader title="Почему нам доверяют" />
+          <div className="grid gap-5 md:grid-cols-3">
+            <Card className="reveal text-center">
+              <p className="text-4xl font-bold tracking-tight text-[color:var(--accent2)]">100+</p>
+              <p className="mt-2 font-medium">клиентов</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Более 100 семей уже купили квартиры с нашей помощью в Луганске</p>
+            </Card>
+            <Card className="reveal text-center">
+              <p className="text-4xl font-bold tracking-tight text-[color:var(--accent2)]">98%</p>
+              <p className="mt-2 font-medium">одобрений ипотеки</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Высокий процент одобрения за счёт опыта работы с банками региона</p>
+            </Card>
+            <Card className="reveal text-center">
+              <p className="text-4xl font-bold tracking-tight text-[color:var(--accent2)]">ИП</p>
+              <p className="mt-2 font-medium">работаем официально</p>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">Зарегистрированный ИП, договор на каждую сделку, все прозрачно</p>
+            </Card>
+          </div>
+        </Container>
+      </section>
+
+      <section id="faq" className="py-20 md:py-28">
         <Container>
           <SectionHeader title="Частые вопросы" />
           <div className="mb-6 rounded-2xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.68)] p-5">
@@ -197,7 +230,26 @@ export default function HomePage() {
         </Container>
       </section>
 
-      <footer className="border-t border-[color:var(--border)] py-8">
+      {/* Sticky CTA — mobile only */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-[color:var(--border)] bg-[rgba(247,242,234,0.95)] px-3 py-3 backdrop-blur-sm md:hidden">
+        <a
+          href={brand.telegramUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="flex flex-1 items-center justify-center rounded-xl border border-[color:var(--borderStrong)] bg-white py-3 text-sm font-medium text-[#111827] transition active:bg-[color:var(--bg2)]"
+        >
+          Написать в Telegram
+        </a>
+        <a
+          href="#lead-form"
+          className="flex flex-1 items-center justify-center rounded-xl py-3 text-sm font-medium text-white transition"
+          style={{ background: 'var(--accent2)' }}
+        >
+          Получить подборку
+        </a>
+      </div>
+
+      <footer className="border-t border-[color:var(--border)] pb-24 pt-8 md:py-8">
         <Container>
           <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-[color:var(--muted)]">
             <p>© {new Date().getFullYear()} svoydom-lugansk.ru</p>

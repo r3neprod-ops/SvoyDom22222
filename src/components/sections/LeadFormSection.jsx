@@ -6,49 +6,65 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
 
+const QUIZ_STEPS = 5;
+const TOTAL_STEPS = 6;
+
 const stepTitles = [
-  'Что подбираем?',
-  'Планировка',
   'Бюджет',
-  'Первоначальный взнос',
+  'Район',
+  'Количество комнат',
+  'Способ оплаты',
+  'Срок покупки',
   'Контакты',
 ];
 
-const propertyOptions = [
-  { label: 'Новостройка (квартира)', value: 'apartment_newbuild' },
-  { label: 'Частный дом', value: 'house' },
-  { label: 'Участок + дом', value: 'land_house' },
-  { label: 'Нужна консультация', value: 'consultation' },
-];
-
-const apartmentOptionsBase = [
-  { label: 'Студия 20–30 м²', value: 'studio_20_30' },
-  { label: '1-комнатная 40–55 м²', value: '1k_40_55' },
-  { label: '2-комнатная 55–65 м²', value: '2k_55_65' },
-  { label: '3+ комнат 65+ м²', value: '3k_65_plus' },
-];
-
 const budgetOptions = [
-  { label: '4–6 млн', value: '4_6' },
-  { label: '6–8 млн', value: '6_8' },
-  { label: '8–10 млн', value: '8_10' },
-  { label: '10+ млн', value: '10_plus' },
+  { label: 'до 4 млн ₽', value: 'under_4' },
+  { label: '4–6 млн ₽', value: '4_6' },
+  { label: '6–8 млн ₽', value: '6_8' },
+  { label: '8–10 млн ₽', value: '8_10' },
+  { label: '10+ млн ₽', value: '10_plus' },
   { label: 'Свой вариант', value: 'custom' },
 ];
 
-const downPaymentOptions = [
+const districtOptions = [
+  { label: 'Центральный', value: 'center' },
+  { label: 'Луганск Западный', value: 'west' },
+  { label: 'Жовтневый', value: 'zhovtnevyi' },
+  { label: 'Артёмовск', value: 'artemovsk' },
+  { label: 'Не важно', value: 'any' },
+];
+
+const roomOptions = [
+  { label: 'Студия', value: 'studio' },
+  { label: '1 комната', value: '1room' },
+  { label: '2 комнаты', value: '2rooms' },
+  { label: '3+ комнат', value: '3plus' },
+  { label: 'Не важно', value: 'any' },
+];
+
+const paymentOptions = [
+  { label: 'Ипотека под 2%', value: 'mortgage' },
+  { label: 'Наличные', value: 'cash' },
+  { label: 'Военный сертификат', value: 'military_cert' },
   { label: 'Маткапитал', value: 'matcap' },
-  { label: 'Маткапитал + собственные средства', value: 'matcap_plus_own' },
-  { label: 'Собственные средства', value: 'own' },
+  { label: 'Смешанный вариант', value: 'mixed' },
+];
+
+const timelineOptions = [
+  { label: 'В ближайший месяц', value: 'asap' },
+  { label: '1–3 месяца', value: '1_3_months' },
+  { label: '3–6 месяцев', value: '3_6_months' },
+  { label: 'Пока изучаю варианты', value: 'exploring' },
 ];
 
 const initialAnswers = {
-  propertyType: '',
-  apartmentType: '',
   budgetPreset: '',
   budgetCustom: '',
-  downPaymentType: '',
-  downPaymentOwnAmount: '',
+  district: '',
+  rooms: '',
+  paymentType: '',
+  purchaseTimeline: '',
   name: '',
   phone: '',
   telegram: '',
@@ -64,7 +80,6 @@ export default function LeadFormSection() {
   const [done, setDone] = useState(false);
   const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [embeddedDone, setEmbeddedDone] = useState(false);
-  const [amountError, setAmountError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -89,23 +104,14 @@ export default function LeadFormSection() {
     };
   }, []);
 
-  const apartmentOptions = useMemo(() => {
-    if (leadAnswers.propertyType && leadAnswers.propertyType !== 'apartment_newbuild') {
-      return [...apartmentOptionsBase, { label: 'Пока не знаю', value: 'dont_know' }];
-    }
-    return apartmentOptionsBase;
-  }, [leadAnswers.propertyType]);
-
   const modalProgress = useMemo(() => {
     if (done) return 100;
-    const percent = Math.round((modalStep / stepTitles.length) * 100);
-    return Math.min(100, Math.max(0, percent));
+    return Math.min(100, Math.max(0, Math.round((modalStep / TOTAL_STEPS) * 100)));
   }, [done, modalStep]);
 
   const embeddedProgress = useMemo(() => {
     if (embeddedDone) return 100;
-    const percent = Math.round((embeddedStep / stepTitles.length) * 100);
-    return Math.min(100, Math.max(0, percent));
+    return Math.min(100, Math.max(0, Math.round((embeddedStep / TOTAL_STEPS) * 100)));
   }, [embeddedDone, embeddedStep]);
 
   const closeModal = () => {
@@ -115,75 +121,28 @@ export default function LeadFormSection() {
 
   const setValue = (key, value) => setLeadAnswers((prev) => ({ ...prev, [key]: value }));
 
-  const setDownPaymentType = (value) => {
-    setLeadAnswers((prev) => ({
-      ...prev,
-      downPaymentType: value,
-      downPaymentOwnAmount: value === 'matcap' ? '' : prev.downPaymentOwnAmount,
-    }));
-    setAmountError('');
-  };
-
-  const isOwnAmountValid = () => {
-    if (!leadAnswers.downPaymentOwnAmount) return true;
-    const amount = Number(leadAnswers.downPaymentOwnAmount);
-    return Number.isFinite(amount) && amount > 0;
-  };
-
   const canProceed = (step) => {
-    if (step === 1) return Boolean(leadAnswers.propertyType);
-    if (step === 2) return Boolean(leadAnswers.apartmentType);
-    if (step === 3) {
+    if (step === 1) {
       if (!leadAnswers.budgetPreset) return false;
       if (leadAnswers.budgetPreset === 'custom') return Boolean(leadAnswers.budgetCustom.trim());
       return true;
     }
+    if (step === 2) return Boolean(leadAnswers.district);
+    if (step === 3) return Boolean(leadAnswers.rooms);
+    if (step === 4) return Boolean(leadAnswers.paymentType);
+    if (step === 5) return Boolean(leadAnswers.purchaseTimeline);
     return true;
   };
 
-  const nextModal = () => {
-    if (modalStep === 1 && leadAnswers.propertyType === 'consultation') {
-      setAmountError('');
-      setModalStep(stepTitles.length);
-      return;
-    }
-
-    if (modalStep === 5 && !isOwnAmountValid()) {
-      setAmountError('Введите сумму больше 0 или оставьте поле пустым.');
-      return;
-    }
-    setAmountError('');
-    setModalStep((prev) => Math.min(prev + 1, stepTitles.length));
-  };
-
-  const prevModal = () => {
-    setAmountError('');
-    setModalStep((prev) => Math.max(prev - 1, 1));
-  };
-
-  const nextEmbedded = () => {
-    if (embeddedStep === 1 && leadAnswers.propertyType === 'consultation') {
-      setAmountError('');
-      setEmbeddedStep(stepTitles.length);
-      return;
-    }
-
-    if (embeddedStep === 5 && !isOwnAmountValid()) {
-      setAmountError('Введите сумму больше 0 или оставьте поле пустым.');
-      return;
-    }
-    setAmountError('');
-    setEmbeddedStep((prev) => Math.min(prev + 1, stepTitles.length));
-  };
-
-  const prevEmbedded = () => {
-    setAmountError('');
-    setEmbeddedStep((prev) => Math.max(prev - 1, 1));
-  };
+  const nextModal = () => setModalStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+  const prevModal = () => setModalStep((prev) => Math.max(prev - 1, 1));
+  const nextEmbedded = () => setEmbeddedStep((prev) => Math.min(prev + 1, TOTAL_STEPS));
+  const prevEmbedded = () => setEmbeddedStep((prev) => Math.max(prev - 1, 1));
 
   const resetEmbedded = () => {
     setEmbeddedDone(false);
     setEmbeddedStep(1);
+    setLeadAnswers(initialAnswers);
     setSubmitErrorMessage('');
   };
 
@@ -195,13 +154,18 @@ export default function LeadFormSection() {
     createdAt: new Date().toISOString(),
     company: leadAnswers.company,
     answers: {
-      propertyType: leadAnswers.propertyType,
-      apartmentType: leadAnswers.apartmentType,
       budgetPreset: leadAnswers.budgetPreset,
-      budgetCustom: leadAnswers.budgetCustom,
-      downPaymentType: leadAnswers.downPaymentType || null,
-      downPaymentOwnAmount: leadAnswers.downPaymentOwnAmount ? String(leadAnswers.downPaymentOwnAmount) : null,
+      budgetCustom: leadAnswers.budgetCustom || null,
+      district: leadAnswers.district,
+      rooms: leadAnswers.rooms,
+      paymentType: leadAnswers.paymentType,
+      purchaseTimeline: leadAnswers.purchaseTimeline,
       telegram: leadAnswers.telegram,
+      // Legacy fields kept for API/admin compatibility
+      propertyType: 'apartment_newbuild',
+      apartmentType: leadAnswers.rooms,
+      downPaymentType: leadAnswers.paymentType || null,
+      downPaymentOwnAmount: null,
     },
     utm: {
       source: new URLSearchParams(window.location.search).get('utm_source') || '',
@@ -214,18 +178,28 @@ export default function LeadFormSection() {
 
   const submitLead = async () => {
     if (isSubmitting) return false;
-    if (!leadAnswers.privacyConsent) return false;
+
+    if (!leadAnswers.name.trim()) {
+      setSubmitErrorMessage('Укажите ваше имя.');
+      return false;
+    }
+    if (!leadAnswers.phone.trim()) {
+      setSubmitErrorMessage('Укажите номер телефона.');
+      return false;
+    }
+    if (!leadAnswers.privacyConsent) {
+      setSubmitErrorMessage('Необходимо согласие на обработку персональных данных.');
+      return false;
+    }
 
     const payload = buildPayload();
-
     setIsSubmitting(true);
     setSubmitErrorMessage('');
+
     try {
       const response = await fetch('/api/lead', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
@@ -235,14 +209,15 @@ export default function LeadFormSection() {
         if (typeof window !== 'undefined' && typeof window.ym === 'function') {
           window.ym(107023721, 'reachGoal', 'lead_submit');
         }
-
         return true;
       }
 
-      setSubmitErrorMessage(data?.message || 'Не удалось отправить. Попробуйте ещё раз.');
+      const msg = data?.message || 'Не удалось отправить. Попробуйте ещё раз.';
+      console.error('[LeadForm] submit error:', msg, data);
+      setSubmitErrorMessage(msg);
       return false;
     } catch (error) {
-      console.error('Lead submit failed', error);
+      console.error('[LeadForm] submit failed:', error);
       setSubmitErrorMessage('Не удалось отправить. Попробуйте ещё раз.');
       return false;
     } finally {
@@ -262,51 +237,20 @@ export default function LeadFormSection() {
     if (ok) setEmbeddedDone(true);
   };
 
-  const showOwnAmount = leadAnswers.downPaymentType === 'matcap_plus_own' || leadAnswers.downPaymentType === 'own';
+  const stepLabel = (step) =>
+    step <= QUIZ_STEPS ? `Вопрос ${step} из ${QUIZ_STEPS}` : 'Контакты';
 
   const renderStep = (step) => {
     if (step === 1) {
       return (
         <div className="space-y-3">
-          <p className="text-sm font-medium">Что вы хотите выбрать?</p>
-          <InlineChoice
-            options={propertyOptions.map((item) => item.label)}
-            value={propertyOptions.find((item) => item.value === leadAnswers.propertyType)?.label || ''}
-            onSelect={(label) => {
-              const option = propertyOptions.find((item) => item.label === label);
-              if (option) setValue('propertyType', option.value);
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (step === 2) {
-      return (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Какой вариант вы рассматриваете?</p>
-          <InlineChoice
-            options={apartmentOptions.map((item) => item.label)}
-            value={apartmentOptions.find((item) => item.value === leadAnswers.apartmentType)?.label || ''}
-            onSelect={(label) => {
-              const option = apartmentOptions.find((item) => item.label === label);
-              if (option) setValue('apartmentType', option.value);
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (step === 3) {
-      return (
-        <div className="space-y-3">
           <p className="text-sm font-medium">На какой бюджет ориентируетесь?</p>
           <InlineChoice
-            options={budgetOptions.map((item) => item.label)}
-            value={budgetOptions.find((item) => item.value === leadAnswers.budgetPreset)?.label || ''}
+            options={budgetOptions.map((o) => o.label)}
+            value={budgetOptions.find((o) => o.value === leadAnswers.budgetPreset)?.label || ''}
             onSelect={(label) => {
-              const option = budgetOptions.find((item) => item.label === label);
-              if (option) setValue('budgetPreset', option.value);
+              const opt = budgetOptions.find((o) => o.label === label);
+              if (opt) setValue('budgetPreset', opt.value);
             }}
           />
           {leadAnswers.budgetPreset === 'custom' && (
@@ -324,37 +268,70 @@ export default function LeadFormSection() {
       );
     }
 
-    if (step === 4) {
+    if (step === 2) {
       return (
-        <div className="space-y-4">
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Предпочтительный район?</p>
           <InlineChoice
-            options={downPaymentOptions.map((item) => item.label)}
-            value={downPaymentOptions.find((item) => item.value === leadAnswers.downPaymentType)?.label || ''}
+            options={districtOptions.map((o) => o.label)}
+            value={districtOptions.find((o) => o.value === leadAnswers.district)?.label || ''}
             onSelect={(label) => {
-              const option = downPaymentOptions.find((item) => item.label === label);
-              if (option) setDownPaymentType(option.value);
+              const opt = districtOptions.find((o) => o.label === label);
+              if (opt) setValue('district', opt.value);
             }}
           />
-          <p className="text-sm text-[color:var(--muted)]">Выберите, из каких средств планируете сформировать первый взнос.</p>
-          {showOwnAmount && (
-            <div className="space-y-2">
-              <input
-                className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
-                placeholder={
-                  leadAnswers.downPaymentType === 'matcap_plus_own'
-                    ? 'Сколько собственных средств планируете внести? (₽)'
-                    : 'Какую сумму планируете внести в качестве первоначального взноса? (₽)'
-                }
-                type="number"
-                min="0"
-                value={leadAnswers.downPaymentOwnAmount}
-                onChange={(e) => {
-                  setValue('downPaymentOwnAmount', e.target.value);
-                  setAmountError('');
-                }}
-              />
-              {amountError && <p className="text-sm text-red-500">{amountError}</p>}
-            </div>
+        </div>
+      );
+    }
+
+    if (step === 3) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Сколько комнат?</p>
+          <InlineChoice
+            options={roomOptions.map((o) => o.label)}
+            value={roomOptions.find((o) => o.value === leadAnswers.rooms)?.label || ''}
+            onSelect={(label) => {
+              const opt = roomOptions.find((o) => o.label === label);
+              if (opt) setValue('rooms', opt.value);
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (step === 4) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Способ оплаты?</p>
+          <InlineChoice
+            options={paymentOptions.map((o) => o.label)}
+            value={paymentOptions.find((o) => o.value === leadAnswers.paymentType)?.label || ''}
+            onSelect={(label) => {
+              const opt = paymentOptions.find((o) => o.label === label);
+              if (opt) setValue('paymentType', opt.value);
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (step === 5) {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm font-medium">Когда планируете покупку?</p>
+          <InlineChoice
+            options={timelineOptions.map((o) => o.label)}
+            value={timelineOptions.find((o) => o.value === leadAnswers.purchaseTimeline)?.label || ''}
+            onSelect={(label) => {
+              const opt = timelineOptions.find((o) => o.label === label);
+              if (opt) setValue('purchaseTimeline', opt.value);
+            }}
+          />
+          {leadAnswers.purchaseTimeline && (
+            <p className="rounded-xl border border-[color:var(--border)] bg-[color:var(--bg2)] px-4 py-3 text-sm text-[color:var(--muted)]">
+              Уже подобрали 5–7 вариантов под ваш бюджет — вышлем на следующем шаге
+            </p>
           )}
         </div>
       );
@@ -362,10 +339,28 @@ export default function LeadFormSection() {
 
     return (
       <div className="grid gap-3">
-        <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — помогу выбрать лучший вариант</p>
-        <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваше имя" value={leadAnswers.name} onChange={(e) => setValue('name', e.target.value)} required />
-        <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Номер телефона для связи" value={leadAnswers.phone} onChange={(e) => setValue('phone', e.target.value)} required />
-        <input className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3" placeholder="Ваш Telegram для связи (не обязательно)" value={leadAnswers.telegram} onChange={(e) => setValue('telegram', e.target.value)} />
+        <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — вышлем подборку и поможем с ипотекой</p>
+        <input
+          className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3"
+          placeholder="Ваше имя"
+          value={leadAnswers.name}
+          onChange={(e) => setValue('name', e.target.value)}
+          required
+        />
+        <input
+          className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3"
+          placeholder="Номер телефона"
+          type="tel"
+          value={leadAnswers.phone}
+          onChange={(e) => setValue('phone', e.target.value)}
+          required
+        />
+        <input
+          className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3"
+          placeholder="Ваш Telegram (не обязательно)"
+          value={leadAnswers.telegram}
+          onChange={(e) => setValue('telegram', e.target.value)}
+        />
         <label className="flex items-start gap-2.5 rounded-xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.7)] px-3 py-2.5 text-xs leading-relaxed text-[color:var(--muted)] md:text-sm">
           <input
             type="checkbox"
@@ -406,17 +401,24 @@ export default function LeadFormSection() {
         <Container>
           <Card className="embedded-lead-card reveal p-7 transition-colors duration-200 md:p-10">
             <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Короткая заявка</p>
-            <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Получить консультацию</h2>
-            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">Расскажу, какие варианты реально подходят, и сопровожу покупку до сделки.</p>
+            <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Получить подборку квартир</h2>
+            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">5 вопросов — подберём варианты под ваш бюджет и одобрим ипотеку под 2%.</p>
 
-            <div className="mb-6 mt-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
-              <div className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all" style={{ width: `${embeddedProgress}%` }} />
+            <div className="mb-2 mt-6 flex items-center justify-between text-xs text-[color:var(--muted)]">
+              <span>{embeddedDone ? 'Готово' : stepLabel(embeddedStep)}</span>
+              <span>{embeddedDone ? '100%' : `${embeddedProgress}%`}</span>
+            </div>
+            <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
+              <div
+                className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all"
+                style={{ width: `${embeddedProgress}%` }}
+              />
             </div>
 
             {embeddedDone ? (
               <div className="space-y-5">
-                <h3 className="text-2xl tracking-tight">Готово</h3>
-                <p className="text-[color:var(--muted)]">Спасибо! Свяжусь с вами, уточню детали и помогу выбрать подходящий вариант.</p>
+                <h3 className="text-2xl tracking-tight">Заявка принята!</h3>
+                <p className="text-[color:var(--muted)]">Мы свяжемся с вами в течение 5 минут и пришлём подборку квартир.</p>
                 <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button type="button" onClick={resetEmbedded}>Начать заново</Button>
               </div>
@@ -427,15 +429,27 @@ export default function LeadFormSection() {
                   {embeddedStep > 1 && (
                     <Button type="button" variant="ghost" onClick={prevEmbedded}>Назад</Button>
                   )}
-                  {embeddedStep < stepTitles.length ? (
-                    <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>Далее</Button>
+                  {embeddedStep < TOTAL_STEPS ? (
+                    <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>
+                      Далее
+                    </Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim() || !leadAnswers.privacyConsent}>
-                      {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSubmitting ||
+                        !leadAnswers.name.trim() ||
+                        !leadAnswers.phone.trim() ||
+                        !leadAnswers.privacyConsent
+                      }
+                    >
+                      {isSubmitting ? 'Отправка...' : 'Получить подборку квартир'}
                     </Button>
                   )}
                 </div>
-                {submitErrorMessage && <p className="text-sm text-[color:var(--muted)]">{submitErrorMessage}</p>}
+                {submitErrorMessage && (
+                  <p className="text-sm text-red-500">{submitErrorMessage}</p>
+                )}
               </form>
             )}
           </Card>
@@ -447,20 +461,33 @@ export default function LeadFormSection() {
           <div className="w-full max-w-2xl rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[var(--shadowHover)] md:p-8">
             <div className="mb-4 flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Получить консультацию</p>
-                <h3 className="text-2xl tracking-tight">{done ? 'Спасибо!' : stepTitles[modalStep - 1]}</h3>
+                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Получить подборку</p>
+                <h3 className="text-2xl tracking-tight">
+                  {done ? 'Заявка принята!' : stepTitles[modalStep - 1]}
+                </h3>
               </div>
-              <button type="button" className="focus-ring rounded-lg px-2 py-1 text-sm" onClick={closeModal}>Закрыть</button>
+              <button type="button" className="focus-ring rounded-lg px-2 py-1 text-sm" onClick={closeModal}>
+                Закрыть
+              </button>
             </div>
 
+            {!done && (
+              <div className="mb-2 flex items-center justify-between text-xs text-[color:var(--muted)]">
+                <span>{stepLabel(modalStep)}</span>
+                <span>{modalProgress}%</span>
+              </div>
+            )}
             <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
-              <div className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all" style={{ width: `${modalProgress}%` }} />
+              <div
+                className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all"
+                style={{ width: `${modalProgress}%` }}
+              />
             </div>
 
             {done ? (
               <div className="space-y-5">
                 <p className="text-[color:var(--muted)]">
-                  Спасибо! Я свяжусь с вами и пришлю варианты.
+                  Мы свяжемся с вами в течение 5 минут и пришлём подборку квартир.
                 </p>
                 <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
                 <Button onClick={closeModal}>Закрыть</Button>
@@ -468,20 +495,31 @@ export default function LeadFormSection() {
             ) : (
               <form onSubmit={submit} className="space-y-6">
                 {renderStep(modalStep)}
-
                 <div className="flex flex-wrap gap-3">
                   {modalStep > 1 && (
                     <Button type="button" variant="ghost" onClick={prevModal}>Назад</Button>
                   )}
-                  {modalStep < stepTitles.length ? (
-                    <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>Далее</Button>
+                  {modalStep < TOTAL_STEPS ? (
+                    <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>
+                      Далее
+                    </Button>
                   ) : (
-                    <Button type="submit" disabled={isSubmitting || !leadAnswers.name.trim() || !leadAnswers.phone.trim() || !leadAnswers.privacyConsent}>
-                      {isSubmitting ? 'Отправка...' : 'Получить консультацию'}
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSubmitting ||
+                        !leadAnswers.name.trim() ||
+                        !leadAnswers.phone.trim() ||
+                        !leadAnswers.privacyConsent
+                      }
+                    >
+                      {isSubmitting ? 'Отправка...' : 'Получить подборку квартир'}
                     </Button>
                   )}
                 </div>
-                {submitErrorMessage && <p className="text-sm text-[color:var(--muted)]">{submitErrorMessage}</p>}
+                {submitErrorMessage && (
+                  <p className="text-sm text-red-500">{submitErrorMessage}</p>
+                )}
               </form>
             )}
           </div>
