@@ -155,8 +155,8 @@ export default function ComplexCarouselCard({ complex }) {
               </span>
             ))}
           </div>
-          <a href="#contacts" className="mt-4 inline-flex text-sm text-[color:var(--accent2)] hover:underline">
-            Подробнее
+          <a href="#lead-form" className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-[color:var(--accent2)] px-4 py-2 text-sm font-medium text-[color:var(--accent2)] transition hover:bg-[color:var(--accent2)] hover:text-white">
+            Узнать цены и планировки →
           </a>
         </>
       )}

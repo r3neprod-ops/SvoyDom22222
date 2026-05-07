@@ -399,10 +399,23 @@ export default function LeadFormSection() {
     <>
       <section id="lead-form" className="py-12 md:py-16">
         <Container>
+          {/* Pre-quiz intro — продающий заголовок над формой */}
+          {!embeddedDone && (
+            <div className="mb-5 text-center md:text-left">
+              <h2 className="text-2xl font-bold tracking-tight text-[#111827] md:text-3xl">
+                Получите подборку квартир под ваш бюджет
+              </h2>
+              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-start">
+                <span className="quiz-benefit-pill">→ 5–7 вариантов квартир</span>
+                <span className="quiz-benefit-pill">→ Расчёт ипотеки</span>
+                <span className="quiz-benefit-pill">→ Одобрение за 24 часа</span>
+              </div>
+            </div>
+          )}
+
           <Card className="embedded-lead-card reveal p-7 transition-colors duration-200 md:p-10">
-            <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Короткая заявка</p>
-            <h2 className="text-3xl tracking-tight leading-[1.1] text-[#111827] md:text-4xl">Получить подборку квартир</h2>
-            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">5 вопросов — подберём варианты под ваш бюджет и одобрим ипотеку под 2%.</p>
+            <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Быстрый подбор</p>
+            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">5 вопросов — и мы пришлём варианты с ценами и планировками.</p>
 
             <div className="mb-2 mt-6 flex items-center justify-between text-xs text-[color:var(--muted)]">
               <span>{embeddedDone ? 'Готово' : stepLabel(embeddedStep)}</span>
@@ -424,7 +437,9 @@ export default function LeadFormSection() {
               </div>
             ) : (
               <form onSubmit={submitEmbedded} className="space-y-6">
-                {renderStep(embeddedStep)}
+                <div key={`emb-${embeddedStep}`} className="quiz-step-animate">
+                  {renderStep(embeddedStep)}
+                </div>
                 <div className="mt-8 flex flex-wrap gap-3">
                   {embeddedStep > 1 && (
                     <Button type="button" variant="ghost" onClick={prevEmbedded}>Назад</Button>
@@ -494,7 +509,9 @@ export default function LeadFormSection() {
               </div>
             ) : (
               <form onSubmit={submit} className="space-y-6">
-                {renderStep(modalStep)}
+                <div key={`mod-${modalStep}`} className="quiz-step-animate">
+                  {renderStep(modalStep)}
+                </div>
                 <div className="flex flex-wrap gap-3">
                   {modalStep > 1 && (
                     <Button type="button" variant="ghost" onClick={prevModal}>Назад</Button>

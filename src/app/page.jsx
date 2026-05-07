@@ -46,44 +46,69 @@ export default function HomePage() {
                 boxShadow: '0 18px 50px rgba(17,24,39,0.10)',
               }}
             >
-              <p className="mb-5 text-xs uppercase tracking-[0.28em] text-[rgba(17,24,39,0.55)]">Новостройки Луганска — подбор и ипотека бесплатно</p>
-              <h1 className="max-w-3xl text-4xl leading-[1.08] tracking-tight text-[#111827] md:text-6xl">Квартиры в новостройках Луганска от 3,8 млн ₽</h1>
-              <p className="mt-6 max-w-2xl text-base leading-[1.625] text-[rgba(17,24,39,0.72)]">Подберем квартиру и одобрим ипотеку под 2% за 24 часа.</p>
-              <ul className="mt-4 space-y-2 text-sm text-[rgba(17,24,39,0.72)]">
-                <li className="flex items-center gap-2">
-                  <span className="text-[color:var(--accent2)]">✓</span> Без первоначального взноса — варианты есть
+              {/* Urgency badge */}
+              <div className="badge-urgent mb-4">
+                <span className="badge-urgent-dot" />
+                Актуально — май 2026 · Цены на новостройки растут
+              </div>
+
+              {/* H1 — контекст, на 2 строки */}
+              <h1 className="text-[1.625rem] font-bold leading-[1.1] tracking-tight text-[#111827] sm:text-[1.875rem] md:text-[2.25rem]">
+                Квартиры в новостройках<br /> Луганска от 3,8 млн ₽
+              </h1>
+
+              {/* Главный триггер — крупнее заголовка, самый заметный */}
+              <div className="hero-rate-badge mt-5">
+                ⚡ Ипотека под 2% · за 24 часа
+              </div>
+
+              {/* Подзаголовок */}
+              <p className="mt-4 max-w-2xl text-[16px] leading-[1.65] text-[rgba(17,24,39,0.72)]">
+                Подберём квартиру бесплатно и проведём от выбора до ключей.
+              </p>
+
+              {/* Буллеты с иконками */}
+              <ul className="mt-4 space-y-2.5">
+                <li className="flex items-center gap-3 text-sm text-[rgba(17,24,39,0.72)]">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent2)] text-[10px] text-white font-bold">1</span>
+                  Подбор квартиры за 1 день — бесплатно
                 </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[color:var(--accent2)]">✓</span> Работаем с военными и материнскими сертификатами
+                <li className="flex items-center gap-3 text-sm text-[rgba(17,24,39,0.72)]">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent2)] text-[10px] text-white font-bold">2</span>
+                  Работаем с военными и материнскими сертификатами
                 </li>
-                <li className="flex items-center gap-2">
-                  <span className="text-[color:var(--accent2)]">✓</span> Подбор квартиры за 1 день — бесплатно
+                <li className="flex items-center gap-3 text-sm text-[rgba(17,24,39,0.72)]">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent2)] text-[10px] text-white font-bold">3</span>
+                  Без первоначального взноса — варианты есть
+                </li>
+                <li className="flex items-center gap-3 text-sm text-[rgba(17,24,39,0.72)]">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent2)] text-[10px] text-white font-bold">4</span>
+                  Высокий шанс одобрения ипотеки
                 </li>
               </ul>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Button as="a" href="#lead-form">Получить подборку квартир</Button>
-                <Button
-                  as="a"
-                  href={brand.telegramUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  variant="ghost"
-                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
-                >
-                  Написать в Telegram
-                </Button>
-                <Button
-                  as="a"
-                  href={MAX_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variant="ghost"
-                  className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
-                >
-                  Написать в MAX
-                </Button>
+
+              {/* CTA */}
+              <div className="mt-8">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                  <Button as="a" href="#lead-form" className="px-7 py-4 text-[15px]">
+                    Получить подборку квартир
+                  </Button>
+                  <Button
+                    as="a"
+                    href={brand.telegramUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    variant="ghost"
+                    className="border-[rgba(17,24,39,0.14)] bg-[rgba(255,255,255,0.35)] text-[#111827] [backdrop-filter:blur(12px)_saturate(140%)] hover:bg-[rgba(255,255,255,0.48)] hover:shadow-[0_10px_30px_rgba(17,24,39,0.10)] active:bg-[rgba(255,255,255,0.55)]"
+                  >
+                    Написать в Telegram
+                  </Button>
+                </div>
+                <p className="cta-hint">Ответим в течение 5 минут</p>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.72)]">
+
+              {/* Контактные ссылки */}
+              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-[rgba(17,24,39,0.72)]">
                 <a className="focus-ring rounded-lg px-1" href={`tel:${brand.phoneHref}`}>{brand.phoneDisplay}</a>
                 <a className="focus-ring rounded-lg px-1" href={brand.telegramUrl} target="_blank" rel="noreferrer">Telegram</a>
                 <a className="focus-ring rounded-lg px-1" href={MAX_URL} target="_blank" rel="noopener noreferrer">MAX</a>
