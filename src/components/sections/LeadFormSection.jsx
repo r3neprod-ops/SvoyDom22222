@@ -29,7 +29,7 @@ const budgetOptions = [
 
 const districtOptions = [
   { label: 'Центральный', value: 'center' },
-  { label: 'Луганск Западный', value: 'west' },
+  { label: 'Октябрьский', value: 'oktyabrsky' },
   { label: 'Жовтневый', value: 'zhovtnevyi' },
   { label: 'Артёмовск', value: 'artemovsk' },
   { label: 'Не важно', value: 'any' },
