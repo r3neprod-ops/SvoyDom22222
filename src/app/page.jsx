@@ -52,9 +52,9 @@ export default function HomePage() {
                 Актуально — май 2026 · Цены на новостройки растут
               </div>
 
-              {/* H1 — контекст, на 2 строки */}
-              <h1 className="text-[1.625rem] font-bold leading-[1.1] tracking-tight text-[#111827] sm:text-[1.875rem] md:text-[2.25rem]">
-                Квартиры в новостройках<br /> Луганска от 3,8 млн ₽
+              {/* H1 — контекст, 44px desktop / 28px mobile */}
+              <h1 className="text-[1.75rem] font-bold leading-[1.08] tracking-tight text-[#111827] md:text-[2.75rem]">
+                Квартиры в новостройках<br />Луганска от 3,8 млн ₽
               </h1>
 
               {/* Главный триггер — крупнее заголовка, самый заметный */}
@@ -121,9 +121,37 @@ export default function HomePage() {
         <LeadFormSection />
       </div>
 
+      {/* ── Почему сейчас — urgency section ── */}
+      <section className="py-16 md:py-20" style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.04) 0%, rgba(245,158,11,0.04) 100%)' }}>
+        <Container>
+          <SectionHeader title="Почему важно не откладывать" subtitle="Рынок новостроек Луганска меняется быстро — каждая неделя ожидания стоит денег." />
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="card why-now-card why-now-card--orange reveal p-6">
+              <p className="text-3xl font-bold text-orange-500">📈</p>
+              <h3 className="mt-3 text-xl font-bold tracking-tight">Цены растут каждый месяц</h3>
+              <p className="mt-2 text-[color:var(--muted)]">Средний рост стоимости новостроек — 3–5% в месяц. Квартира за 4 млн сейчас через 3 месяца стоит 4,5 млн.</p>
+            </div>
+            <div className="card why-now-card why-now-card--red reveal p-6">
+              <p className="text-3xl font-bold text-red-500">🏠</p>
+              <h3 className="mt-3 text-xl font-bold tracking-tight">Квартир остаётся всё меньше</h3>
+              <p className="mt-2 text-[color:var(--muted)]">Лучшие планировки разбирают первыми. Студии и однушки заканчиваются быстрее всего.</p>
+            </div>
+            <div className="card why-now-card why-now-card--amber reveal p-6">
+              <p className="text-3xl font-bold text-amber-500">⏰</p>
+              <h3 className="mt-3 text-xl font-bold tracking-tight">Льготная ипотека ограничена</h3>
+              <p className="mt-2 text-[color:var(--muted)]">Ипотека под 2% — государственная программа с лимитом мест. Условия могут измениться.</p>
+            </div>
+          </div>
+          <div className="mt-8 text-center">
+            <Button as="a" href="#lead-form" className="px-8 py-4 text-[15px]">Получить подборку сейчас</Button>
+            <p className="cta-hint mt-2">Ответим в течение 5 минут</p>
+          </div>
+        </Container>
+      </section>
+
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
-          <SectionHeader title="Помогу выбрать ЖК и оформить ипотеку, взяв на себя все этапы работы с банками и застройщиками." />
+          <SectionHeader title="Что входит в работу" subtitle="Подберём, одобрим, оформим — всё бесплатно для вас." />
           <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
             {services.map((item) => (
               <Card key={item.title} className="reveal">

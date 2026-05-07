@@ -88,7 +88,21 @@ export default function ComplexCarouselCard({ complex }) {
       ) : (
         /* Normal Mode: Auto-carousel slider */
         <>
-          <div className="relative h-44 overflow-hidden rounded-2xl">
+          <div className="relative h-48 overflow-hidden rounded-2xl">
+            {/* Price badge */}
+            {complex.priceFrom && (
+              <div className="absolute left-3 top-3 z-10">
+                <span className="complex-price-badge">{complex.priceFrom}</span>
+              </div>
+            )}
+            {/* Completion date badge */}
+            {complex.completionDate && (
+              <div className="absolute right-3 top-3 z-10">
+                <span className="inline-block rounded-lg bg-black/50 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                  {complex.completionDate}
+                </span>
+              </div>
+            )}
             {/* Render all image slots in DOM, but hide inactive ones with opacity */}
             {complex.photos.map((photoKey, index) => (
               <div
@@ -140,8 +154,11 @@ export default function ComplexCarouselCard({ complex }) {
             </div>
           </div>
 
-          <h3 className="mt-4 text-lg tracking-tight">{complex.title}</h3>
-          <p className="mt-2 text-sm text-[color:var(--muted)]">{complex.subtitle}</p>
+          <h3 className="mt-4 text-xl font-bold tracking-tight">{complex.title}</h3>
+          {complex.keyAdvantage && (
+            <p className="mt-1 text-sm font-medium text-[color:var(--accent2)]">✓ {complex.keyAdvantage}</p>
+          )}
+          <p className="mt-1.5 text-sm text-[color:var(--muted)]">{complex.subtitle}</p>
         </>
       )}
 
