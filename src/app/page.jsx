@@ -54,7 +54,7 @@ export default function HomePage() {
 
               {/* H1 — контекст, 44px desktop / 28px mobile */}
               <h1 className="text-[1.75rem] font-bold leading-[1.08] tracking-tight text-[#111827] md:text-[2.75rem]">
-                Квартиры в новостройках<br />Луганска от 3,8 млн ₽
+                Квартиры в новостройках<br />Луганска от 5,2 млн ₽
               </h1>
 
               {/* Главный триггер — крупнее заголовка, самый заметный */}
