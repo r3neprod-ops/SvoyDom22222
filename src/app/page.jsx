@@ -40,7 +40,7 @@ export default function HomePage() {
           <Container className="relative flex flex-col gap-5">
             {/* Hero Text Panel - localized backdrop only under content */}
             <div
-              className="reveal max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
+              className="max-w-xl sm:max-w-2xl md:max-w-3xl rounded-[18px] md:rounded-[22px] p-4 sm:p-5 md:p-6 border border-[rgba(17,24,39,0.10)]"
               style={{
                 background: 'rgba(255, 255, 255, 0.55)',
                 backdropFilter: 'blur(10px) saturate(120%)',
