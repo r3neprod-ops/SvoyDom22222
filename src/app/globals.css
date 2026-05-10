@@ -108,11 +108,13 @@ body {
     opacity: 0;
     transform: translateY(24px);
     transition: opacity 700ms ease, transform 700ms ease;
+    will-change: transform, opacity;
   }
 
   .reveal.in-view {
     opacity: 1;
     transform: translateY(0);
+    will-change: auto;
   }
 
   .slot-box {
@@ -182,6 +184,7 @@ body {
   background: #ea580c;
   flex-shrink: 0;
   animation: pulse-dot 2s ease-in-out infinite;
+  will-change: transform, opacity;
 }
 
 @keyframes pulse-dot {
@@ -230,6 +233,7 @@ body {
 
 .quiz-step-animate {
   animation: quiz-step-in 200ms ease forwards;
+  will-change: transform, opacity;
 }
 
 /* ── CRO: Quiz benefit pills ── */

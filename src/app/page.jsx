@@ -16,8 +16,8 @@ import services from '@/data/services';
 const MAX_URL = 'https://max.ru/u/f9LHodD0cOIi4r-SL0pK2dhDjayjfz3potOe5T20iWeHHeSSewgkP465gHM';
 
 const RevealOnScroll = dynamic(() => import('@/components/RevealOnScroll'), { ssr: false });
-const LeadFormSection = dynamic(() => import('@/components/sections/LeadFormSection'));
-const ComplexCarouselCard = dynamic(() => import('@/components/complexes/ComplexCarouselCard'));
+const LeadFormSection = dynamic(() => import('@/components/sections/LeadFormSection'), { ssr: false });
+const ComplexCarouselCard = dynamic(() => import('@/components/complexes/ComplexCarouselCard'), { ssr: false });
 
 export default function HomePage() {
   return (
@@ -284,7 +284,7 @@ export default function HomePage() {
       </section>
 
       {/* Sticky CTA — mobile only */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-[color:var(--border)] bg-[rgba(247,242,234,0.95)] px-3 py-3 backdrop-blur-sm md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex gap-2 border-t border-[color:var(--border)] bg-[rgba(247,242,234,0.95)] px-3 py-3 backdrop-blur-sm md:hidden" style={{ WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}>
         <a
           href={brand.telegramUrl}
           target="_blank"
