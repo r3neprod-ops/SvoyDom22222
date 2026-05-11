@@ -32,8 +32,7 @@ export default function HomePage() {
           fill
           priority
           fetchPriority="high"
-          sizes="(max-width: 768px) 100vw, 1600px"
-          quality={80}
+          unoptimized
           className="object-cover object-center"
         />
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
@@ -129,8 +128,7 @@ export default function HomePage() {
           src="/images/hero-bg.webp"
           alt=""
           fill
-          sizes="(max-width: 768px) 100vw, 1600px"
-          quality={80}
+          unoptimized
           className="object-cover object-center"
         />
         <div className="absolute inset-0" style={{ background: 'rgba(247,242,234,0.82)' }} />

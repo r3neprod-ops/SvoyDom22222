@@ -32,13 +32,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ru">
       <head>
-        <link
-          rel="preload"
-          as="image"
-          href="/_next/image?url=%2Fimages%2Fhero-bg.webp&w=828&q=80"
-          fetchPriority="high"
-          media="(max-width: 768px)"
-        />
+        <link rel="preload" as="image" href="/images/hero-bg.webp" fetchPriority="high" />
       </head>
       <body>
         {children}
