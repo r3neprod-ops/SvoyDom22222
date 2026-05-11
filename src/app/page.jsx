@@ -27,13 +27,13 @@ export default function HomePage() {
 
       <div className="relative">
         <Image
-          src="/images/hero.webp"
+          src="/images/hero-bg.webp"
           alt=""
           fill
           priority
           fetchPriority="high"
           sizes="(max-width: 768px) 100vw, 1600px"
-          quality={60}
+          quality={80}
           className="object-cover object-center"
         />
         <section id="hero" className="relative pt-28 pb-16 md:pt-36 md:pb-24">
@@ -124,32 +124,43 @@ export default function HomePage() {
       </div>
 
       {/* ── Почему сейчас — urgency section ── */}
-      <section className="py-16 md:py-20" style={{ background: 'linear-gradient(135deg, rgba(234,88,12,0.04) 0%, rgba(245,158,11,0.04) 100%)' }}>
-        <Container>
-          <SectionHeader title="Почему важно не откладывать" subtitle="Рынок новостроек Луганска меняется быстро — каждая неделя ожидания стоит денег." />
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="why-now-card reveal">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-              <h3 className="why-now-card__title">Цены растут каждый месяц</h3>
-              <p className="why-now-card__text">Средний рост стоимости новостроек — 3–5% в месяц. Квартира за 4 млн сейчас через 3 месяца стоит 4,5 млн.</p>
+      <div className="relative overflow-hidden">
+        <Image
+          src="/images/hero-bg.webp"
+          alt=""
+          fill
+          sizes="(max-width: 768px) 100vw, 1600px"
+          quality={80}
+          className="object-cover object-center"
+        />
+        <div className="absolute inset-0" style={{ background: 'rgba(247,242,234,0.82)' }} />
+        <section className="relative py-16 md:py-20">
+          <Container>
+            <SectionHeader title="Почему важно не откладывать" subtitle="Рынок новостроек Луганска меняется быстро — каждая неделя ожидания стоит денег." />
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="why-now-card reveal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+                <h3 className="why-now-card__title">Цены растут каждый месяц</h3>
+                <p className="why-now-card__text">Средний рост стоимости новостроек — 3–5% в месяц. Квартира за 4 млн сейчас через 3 месяца стоит 4,5 млн.</p>
+              </div>
+              <div className="why-now-card reveal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <h3 className="why-now-card__title">Квартир остаётся всё меньше</h3>
+                <p className="why-now-card__text">Лучшие планировки разбирают первыми. Студии и однушки заканчиваются быстрее всего.</p>
+              </div>
+              <div className="why-now-card reveal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <h3 className="why-now-card__title">Льготная ипотека ограничена</h3>
+                <p className="why-now-card__text">Ипотека под 2% — государственная программа с лимитом мест. Условия могут измениться.</p>
+              </div>
             </div>
-            <div className="why-now-card reveal">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-              <h3 className="why-now-card__title">Квартир остаётся всё меньше</h3>
-              <p className="why-now-card__text">Лучшие планировки разбирают первыми. Студии и однушки заканчиваются быстрее всего.</p>
+            <div className="mt-8 text-center">
+              <Button as="a" href="#lead-form" className="px-8 py-4 text-[15px]">Получить подборку сейчас</Button>
+              <p className="cta-hint mt-2">Ответим в течение 5 минут</p>
             </div>
-            <div className="why-now-card reveal">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <h3 className="why-now-card__title">Льготная ипотека ограничена</h3>
-              <p className="why-now-card__text">Ипотека под 2% — государственная программа с лимитом мест. Условия могут измениться.</p>
-            </div>
-          </div>
-          <div className="mt-8 text-center">
-            <Button as="a" href="#lead-form" className="px-8 py-4 text-[15px]">Получить подборку сейчас</Button>
-            <p className="cta-hint mt-2">Ответим в течение 5 минут</p>
-          </div>
-        </Container>
-      </section>
+          </Container>
+        </section>
+      </div>
 
       <section id="services" className="bg-[color:var(--bg2)] py-20 md:py-28">
         <Container>
