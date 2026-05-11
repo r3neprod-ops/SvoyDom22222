@@ -14,21 +14,10 @@
 
   --accent: #B08D57;
   --accent2: #7BA59A;
-  --accent3: #C7A6A1;
   --ring: rgba(176, 141, 87, 0.26);
 
   --shadow: 0 18px 50px rgba(31, 41, 55, 0.12);
   --shadowHover: 0 22px 70px rgba(31, 41, 55, 0.16);
-
-  --heroGradient: linear-gradient(120deg,
-      rgba(176, 141, 87, 0.14) 0%,
-      rgba(123, 165, 154, 0.12) 45%,
-      rgba(199, 166, 161, 0.10) 100%);
-
-  --softFade: linear-gradient(180deg,
-      rgba(247, 242, 234, 0.92) 0%,
-      rgba(247, 242, 234, 0.62) 55%,
-      rgba(247, 242, 234, 0.92) 100%);
 }
 
 html {
@@ -56,17 +45,6 @@ body {
   .button-base {
     @apply inline-flex items-center justify-center rounded-xl px-6 py-3 text-sm font-medium tracking-wide transition-all duration-300 focus-ring;
     @apply disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none;
-  }
-
-  .button-primary {
-    background: var(--accent2);
-    color: #fff;
-    box-shadow: 0 14px 36px rgba(123, 165, 154, 0.3);
-  }
-
-  .button-primary:hover {
-    background: #6e958b;
-    transform: translateY(-2px);
   }
 
   .button-secondary {
@@ -207,14 +185,6 @@ body {
   letter-spacing: -0.01em;
   line-height: 1.15;
   box-shadow: 0 6px 20px rgba(123, 165, 154, 0.28), 0 2px 6px rgba(123, 165, 154, 0.14);
-}
-
-@media (min-width: 768px) {
-  .hero-rate-badge {
-    font-size: 22px;
-    padding: 12px 28px;
-    border-radius: 16px;
-  }
 }
 
 /* ── CRO: Hint under CTA ── */

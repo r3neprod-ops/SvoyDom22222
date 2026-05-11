@@ -32,16 +32,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="ru">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#000000" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-title" content="СвойДом" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
-        {/* Preload hero image for mobile — speeds up LCP on slow connections */}
         <link
           rel="preload"
           as="image"
-          href="/_next/image?url=%2Fimages%2Fhero.webp&w=828&q=60"
+          href="/_next/image?url=%2Fimages%2Fhero-bg.webp&w=828&q=80"
           fetchPriority="high"
           media="(max-width: 768px)"
         />
