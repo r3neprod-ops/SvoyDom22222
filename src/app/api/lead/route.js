@@ -147,6 +147,9 @@ async function sendToBitrix24(payload) {
   console.log('[Bitrix] URL configured:', !!webhookUrl);
   if (!webhookUrl) return;
 
+  const finalUrl = webhookUrl.replace(/\/+$/, '') + '/crm.lead.add.json';
+  console.log('[Bitrix] Final URL:', finalUrl);
+
   const answers = asRecord(payload.answers);
   const bitrixPayload = {
     fields: {
@@ -174,7 +177,7 @@ async function sendToBitrix24(payload) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-    const response = await fetch(webhookUrl, {
+    const response = await fetch(finalUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bitrixPayload),
