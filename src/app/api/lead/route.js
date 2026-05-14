@@ -7,28 +7,41 @@ import { getSql } from '@/lib/admin/db';
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const recentLeadStore = new Map();
 
-const PROPERTY_TYPE_LABELS = {
-  apartment: 'Новостройка (квартира)',
-  apartment_newbuild: 'Новостройка (квартира)',
-  house: 'Частный дом',
-  land_house: 'Участок + дом',
-  'land+house': 'Участок + дом',
-  plot_house: 'Участок + дом',
-  consultation: 'Нужна консультация',
+const APARTMENT_TYPE_LABELS = {
+  studio: 'Студия',
+  '1room': '1-комнатная',
+  '2rooms': '2-комнатная',
+  '3rooms': '3-комнатная',
+  '4plus': '4+ комнат',
+  choosing: 'Ещё выбираю',
 };
 
-const APARTMENT_TYPE_LABELS = {
-  studio_20_30: 'Студия (20–30 м²)',
-  '1k_40_55': '1-комнатная (40–55 м²)',
-  '2k_55_65': '2-комнатная (55–65 м²)',
-  '3k_65_plus': '3+ комнат (65+ м²)',
-  dont_know: 'Пока не знаю',
+const BUDGET_LABELS = {
+  '5_to_7': '5–7 млн',
+  '7_to_10': '7–10 млн',
+  '10_plus': '10+ млн',
+};
+
+const PRIORITY_LABELS = {
+  price: 'Цена и выгодные условия',
+  location: 'Локация / транспорт',
+  quality: 'Новый дом и качество строительства',
+  infrastructure: 'Инфраструктура (школы/сад/магазины)',
+  layout: 'Планировка и метраж',
+  investment: 'Для инвестиций (рост цены / аренда)',
+};
+
+const PURCHASE_METHOD_LABELS = {
+  cash: 'Наличные',
+  mortgage: 'Ипотека',
+  need_consultation: 'Ещё не решил(а), нужна консультация',
 };
 
 const DOWN_PAYMENT_LABELS = {
-  matcap: 'Маткапитал',
-  own: 'Свои средства',
-  matcap_plus_own: 'Маткапитал + свои средства',
+  only_maternal: 'Только маткапитал',
+  maternal_plus_own: 'Маткапитал + свои средства',
+  only_own: 'Только свои средства (наличные)',
+  need_advice: 'Пока не знаю / нужна консультация',
 };
 
 function humanizeFallback(value) {
@@ -37,30 +50,11 @@ function humanizeFallback(value) {
   return text.replaceAll('_', ' ');
 }
 
-function formatBudget(value) {
-  const raw = String(value ?? '').trim();
-  if (!raw) return '';
-
-  const mapped = {
-    '4_6': '4–6 млн ₽',
-    '6_8': '6–8 млн ₽',
-    '8_10': '8–10 млн ₽',
-    '10_plus': '10+ млн ₽',
-    custom: 'Свой вариант',
-  };
-
-  if (mapped[raw]) return mapped[raw];
-
-  const normalized = raw.replace(',', '.');
-  if (/^\d+(?:\.\d+)?_\d+(?:\.\d+)?$/.test(normalized)) {
-    const [from, to] = normalized.split('_');
-    return `${from}–${to} млн ₽`;
-  }
-  if (/^\d+(?:\.\d+)?$/.test(normalized)) {
-    return `${normalized} млн ₽`;
-  }
-
-  return humanizeFallback(raw);
+function formatRubles(amount) {
+  if (amount == null) return null;
+  const digits = String(amount).replace(/\D/g, '');
+  if (!digits) return null;
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₽';
 }
 
 function mappedAnswer(value, map) {
@@ -157,11 +151,15 @@ async function sendToBitrix24(payload) {
       NAME: payload.name || '',
       PHONE: [{ VALUE: payload.phone || '', VALUE_TYPE: 'WORK' }],
       COMMENTS: [
-        answers.propertyType && `Тип объекта: ${mappedAnswer(answers.propertyType, PROPERTY_TYPE_LABELS)}`,
-        answers.apartmentType && `Вариант квартиры: ${mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)}`,
-        (answers.budgetPreset || answers.budgetCustom) &&
-          `Бюджет: ${formatBudget(answers.budgetPreset) || humanizeFallback(answers.budgetCustom)}`,
-        answers.downPaymentType && `Взнос: ${mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)}`,
+        answers.consultationFromBudget && '⚠️ Запрос на консультацию: бюджет не соответствует желаемому метражу',
+        answers.apartmentType && `Тип квартиры: ${mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)}`,
+        answers.budgetPreset && `Бюджет: ${mappedAnswer(answers.budgetPreset, BUDGET_LABELS)}`,
+        answers.priority && `Приоритет: ${mappedAnswer(answers.priority, PRIORITY_LABELS)}`,
+        answers.purchaseMethod && `Способ покупки: ${mappedAnswer(answers.purchaseMethod, PURCHASE_METHOD_LABELS)}`,
+        answers.cashAmount && `Сумма наличными: ${formatRubles(answers.cashAmount)}`,
+        answers.downPaymentType && `Первоначальный взнос: ${mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)}`,
+        answers.ownFundsAmount && `Собственные средства на взнос: ${formatRubles(answers.ownFundsAmount)}`,
+        answers.telegram && `Telegram: ${answers.telegram}`,
         payload.pageUrl && `Страница: ${payload.pageUrl}`,
       ]
         .filter(Boolean)
