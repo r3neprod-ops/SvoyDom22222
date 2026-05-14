@@ -147,10 +147,11 @@ async function sendToBitrix24(payload) {
   const answers = asRecord(payload.answers);
   const bitrixPayload = {
     fields: {
-      TITLE: `Заявка: ${payload.name || '—'} ${payload.phone || '—'}`,
-      NAME: payload.name || '',
+      TITLE: `[от Мента] Заявка: ${payload.name || '—'} ${payload.phone || '—'}`,
+      NAME: `${payload.name || ''} (от Мента)`,
       PHONE: [{ VALUE: payload.phone || '', VALUE_TYPE: 'WORK' }],
       COMMENTS: [
+        '🟢 Источник: сайт (от Мента)',
         answers.consultationFromBudget && '⚠️ Запрос на консультацию: бюджет не соответствует желаемому метражу',
         answers.apartmentType && `Тип квартиры: ${mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)}`,
         answers.budgetPreset && `Бюджет: ${mappedAnswer(answers.budgetPreset, BUDGET_LABELS)}`,
@@ -165,6 +166,7 @@ async function sendToBitrix24(payload) {
         .filter(Boolean)
         .join('\n'),
       SOURCE_ID: 'WEB',
+      SOURCE_DESCRIPTION: 'Лид с сайта (от Мента)',
     },
     params: { REGISTER_SONET_EVENT: 'Y' },
   };
