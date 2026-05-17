@@ -19,7 +19,7 @@ const APARTMENT_TYPE_LABELS = {
 const BUDGET_LABELS = {
   '5_to_7': '5–7 млн',
   '7_to_10': '7–10 млн',
-  '10_plus': '10+ млн',
+  '10_plus': 'от 10 млн',
 };
 
 const PRIORITY_LABELS = {
@@ -38,10 +38,10 @@ const PURCHASE_METHOD_LABELS = {
 };
 
 const DOWN_PAYMENT_LABELS = {
-  only_maternal: 'Только маткапитал',
+  only_own:          'Только собственные средства',
+  only_maternal:     'Материнский капитал',
   maternal_plus_own: 'Маткапитал + свои средства',
-  only_own: 'Только свои средства (наличные)',
-  need_advice: 'Пока не знаю / нужна консультация',
+  need_advice:       'Нужна консультация',
 };
 
 function humanizeFallback(value) {

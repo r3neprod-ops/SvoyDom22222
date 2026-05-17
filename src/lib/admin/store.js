@@ -1,12 +1,39 @@
 import { getSql, ensureSchema } from './db';
 
+const APARTMENT_TYPE_LABELS = {
+  studio:   'Студия',
+  '1room':  '1-комнатная',
+  '2rooms': '2-комнатная',
+  '3rooms': '3-комнатная',
+  '4plus':  '4+ комнат',
+  choosing: 'Ещё выбираю',
+};
+
+const BUDGET_LABELS = {
+  '5_to_7':  '5–7 млн',
+  '7_to_10': '7–10 млн',
+  '10_plus': 'от 10 млн',
+};
+
+const DOWN_PAYMENT_LABELS = {
+  only_own:        'Только собственные средства',
+  only_maternal:   'Материнский капитал',
+  maternal_plus_own: 'Маткапитал + свои средства',
+  need_advice:     'Нужна консультация',
+};
+
+function mapped(value, map) {
+  const v = String(value ?? '').trim();
+  return map[v] || v.replaceAll('_', ' ');
+}
+
 function buildMessage(answers) {
   if (!answers || typeof answers !== 'object') return '';
   const parts = [];
   if (answers.propertyType)    parts.push(`Тип: ${answers.propertyType}`);
-  if (answers.apartmentType)   parts.push(`Планировка: ${answers.apartmentType}`);
-  if (answers.budgetPreset)    parts.push(`Бюджет: ${answers.budgetPreset}`);
-  if (answers.downPaymentType) parts.push(`Взнос: ${answers.downPaymentType}`);
+  if (answers.apartmentType)   parts.push(`Планировка: ${mapped(answers.apartmentType, APARTMENT_TYPE_LABELS)}`);
+  if (answers.budgetPreset)    parts.push(`Бюджет: ${mapped(answers.budgetPreset, BUDGET_LABELS)}`);
+  if (answers.downPaymentType) parts.push(`Взнос: ${mapped(answers.downPaymentType, DOWN_PAYMENT_LABELS)}`);
   if (answers.telegram)        parts.push(`Telegram: ${answers.telegram}`);
   return parts.join(', ');
 }
