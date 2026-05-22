@@ -174,6 +174,7 @@ export default function LeadFormSection() {
     name: leadAnswers.name,
     phone: leadAnswers.phone,
     privacyConsent: leadAnswers.privacyConsent,
+    source: 'main',
     pageUrl: window.location.href,
     createdAt: new Date().toISOString(),
     company: leadAnswers.company,

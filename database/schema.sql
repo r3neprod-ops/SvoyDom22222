@@ -16,6 +16,7 @@ CREATE TABLE leads (
   phone VARCHAR(50),
   form_data_json JSON,
   source_page TEXT,
+  source VARCHAR(255),
   status VARCHAR(64) NOT NULL,
   assigned_user_id INT NULL,
   admin_comment TEXT

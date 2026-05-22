@@ -3,6 +3,7 @@ import { addLead } from '@/lib/admin/store';
 import { sendPushToAll } from '@/lib/admin/push';
 import { autoAssignLead } from '@/lib/admin/autoAssign';
 import { getSql } from '@/lib/admin/db';
+import { getCorsHeaders, jsonWithCors } from '@/lib/cors';
 
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const recentLeadStore = new Map();
@@ -192,6 +193,11 @@ async function sendToBitrix24(payload) {
   }
 }
 
+export async function OPTIONS(request) {
+  const corsHeaders = getCorsHeaders(request);
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 export async function POST(request) {
   const startTime = Date.now();
   console.log('[Lead] Request received at:', new Date().toISOString());
@@ -200,21 +206,22 @@ export async function POST(request) {
     const payload = await request.json();
 
     if (!payload || typeof payload !== 'object') {
-      return Response.json({ ok: false, code: 'BAD_REQUEST', message: 'Пустой запрос.' }, { status: 400 });
+      return jsonWithCors(request, { ok: false, code: 'BAD_REQUEST', message: 'Пустой запрос.' }, { status: 400 });
     }
 
     if (payload.company && String(payload.company).trim()) {
-      return Response.json({ ok: true });
+      return jsonWithCors(request, { ok: true });
     }
 
     console.log('[Lead] Step: validation');
     const phoneValidation = validatePhone(payload.phone);
     if (!phoneValidation.ok) {
-      return Response.json(phoneValidation.body, { status: phoneValidation.status });
+      return jsonWithCors(request, phoneValidation.body, { status: phoneValidation.status });
     }
 
     if (payload.privacyConsent !== true) {
-      return Response.json(
+      return jsonWithCors(
+        request,
         {
           ok: false,
           code: 'MISSING_PRIVACY_CONSENT',
@@ -235,7 +242,7 @@ export async function POST(request) {
     const dedupeKey = makeDedupKey(phoneValidation.phoneDigits, safePayload.answers);
     if (isDuplicateLead(dedupeKey)) {
       console.log('[Lead] Duplicate detected, skipping bitrix:', dedupeKey);
-      return Response.json({ ok: true, deduped: true });
+      return jsonWithCors(request, { ok: true, deduped: true });
     }
 
     console.log('[Lead] Step: db');
@@ -259,7 +266,8 @@ export async function POST(request) {
       }).catch((err) => console.error('Push notification error:', err));
     } catch (dbError) {
       console.error('Lead DB save error:', dbError);
-      return Response.json(
+      return jsonWithCors(
+        request,
         { ok: false, code: 'DB_ERROR', message: 'Не удалось сохранить заявку. Попробуйте ещё раз.' },
         { status: 500 }
       );
@@ -269,10 +277,11 @@ export async function POST(request) {
     await sendToBitrix24(safePayload);
 
     console.log('[Lead] Completed in', Date.now() - startTime, 'ms');
-    return Response.json({ success: true, leadId });
+    return jsonWithCors(request, { success: true, leadId });
   } catch (error) {
     console.error('Lead API error:', error);
-    return Response.json(
+    return jsonWithCors(
+      request,
       {
         ok: false,
         code: 'SERVER_ERROR',

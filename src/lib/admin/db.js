@@ -67,6 +67,7 @@ export async function ensureSchema() {
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS leads_count INTEGER DEFAULT 0`;
   await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_assigned_at TIMESTAMP`;
+  await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS source TEXT`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS settings (

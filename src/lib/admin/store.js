@@ -45,14 +45,18 @@ export async function addLead(payload) {
   const name    = payload?.name  || answers?.name  || '';
   const phone   = payload?.phone || answers?.phone || '';
   const message = buildMessage(answers);
+  const source  =
+    String(payload?.source ?? '').trim() ||
+    String(payload?.utm?.source ?? '').trim() ||
+    null;
 
   const [row] = await sql`
-    INSERT INTO leads (name, phone, message, status)
-    VALUES (${name}, ${phone}, ${message}, 'new')
+    INSERT INTO leads (name, phone, message, status, source)
+    VALUES (${name}, ${phone}, ${message}, 'new', ${source})
     RETURNING id
   `;
 
-  return { id: row.id, name, phone, message, status: 'new' };
+  return { id: row.id, name, phone, message, status: 'new', source };
 }
 
 export async function getLeads() {
