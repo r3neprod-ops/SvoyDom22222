@@ -2,6 +2,7 @@ import Script from 'next/script';
 import './globals.css';
 
 export const metadata = {
+  metadataBase: new URL('https://www.svoydom-lugansk.ru'),
   title: 'Покупка недвижимости в Луганске под ключ — под ваш бюджет',
   description: 'Полное сопровождение покупки недвижимости в Луганске: подберём вариант под ваш бюджет и проведём за руку от первого шага до сделки. Всю суету берём на себя.',
   manifest: '/manifest.json',
@@ -11,11 +12,15 @@ export const metadata = {
     statusBarStyle: 'default',
   },
   icons: {
-    icon: '/favicon.ico',
-    shortcut: '/favicon.ico',
-    apple: '/icon-192.png',
-    other: [
-      { rel: 'icon', url: '/favicon-96x96.png', sizes: '96x96' },
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-120x120.png', type: 'image/png', sizes: '120x120' },
+      { url: '/favicon-96x96.png', type: 'image/png', sizes: '96x96' },
+    ],
+    shortcut: [{ url: '/favicon.ico' }],
+    apple: [
+      { url: '/apple-touch-icon.png', type: 'image/png', sizes: '180x180' },
     ],
   },
 };
