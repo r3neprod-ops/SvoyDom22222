@@ -22,6 +22,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
@@ -31,6 +32,22 @@ body {
   font-size: 16px;
   line-height: 1.625;
   text-rendering: optimizeLegibility;
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
 }
 
 @layer components {

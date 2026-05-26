@@ -53,7 +53,9 @@ export default function Header() {
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
-            <Button as="a" href="#lead-form" variant="primary" className="!px-4 !py-2 text-xs">Получить консультацию</Button>
+            <span className="hidden min-[390px]:block">
+              <Button as="a" href="#lead-form" variant="primary" className="!px-4 !py-2 text-xs">Получить консультацию</Button>
+            </span>
             <button
               type="button"
               aria-label="Открыть меню"

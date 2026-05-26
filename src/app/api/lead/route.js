@@ -11,13 +11,21 @@ const recentLeadStore = new Map();
 const APARTMENT_TYPE_LABELS = {
   studio: 'Студия',
   '1room': '1-комнатная',
+  '1-room': '1-комнатная',
   '2rooms': '2-комнатная',
+  '2-room': '2-комнатная',
   '3rooms': '3-комнатная',
+  '3-room': '3-комнатная',
   '4plus': '4+ комнат',
+  any: 'Ещё выбираю',
   choosing: 'Ещё выбираю',
 };
 
 const BUDGET_LABELS = {
+  'to-6': 'до 6 млн',
+  '6-8': '6–8 млн',
+  '8-10': '8–10 млн',
+  '10-plus': 'от 10 млн',
   '5_to_7': '5–7 млн',
   '7_to_10': '7–10 млн',
   '10_plus': 'от 10 млн',
@@ -62,6 +70,27 @@ function mappedAnswer(value, map) {
   if (value === null || value === undefined || value === '') return '';
   const normalized = String(value).trim();
   return map[normalized] || humanizeFallback(normalized);
+}
+
+function formatMatchedPlans(value) {
+  if (!Array.isArray(value) || value.length === 0) return [];
+
+  const rows = value
+    .slice(0, 4)
+    .map((plan, index) => {
+      if (!plan || typeof plan !== 'object') return '';
+      const title = plan.title || plan.caption || 'Планировка';
+      const complex = plan.complex ? `ЖК ${plan.complex}` : 'ЖК не указан';
+      const area = plan.area ? `${plan.area} м²` : '';
+      const price = plan.price || '';
+      const source = plan.source ? ` (${plan.source})` : '';
+
+      return `${index + 1}. ${complex}: ${title}${area ? `, ${area}` : ''}${price ? `, ${price}` : ''}${source}`;
+    })
+    .filter(Boolean);
+
+  if (rows.length === 0) return [];
+  return ['Подобранные планировки:', ...rows];
 }
 
 function makeDedupKey(phoneDigits, answers) {
@@ -162,6 +191,7 @@ async function sendToBitrix24(payload) {
         answers.downPaymentType && `Первоначальный взнос: ${mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)}`,
         answers.ownFundsAmount && `Собственные средства на взнос: ${formatRubles(answers.ownFundsAmount)}`,
         answers.telegram && `Telegram: ${answers.telegram}`,
+        ...formatMatchedPlans(answers.matchedPlans),
         payload.pageUrl && `Страница: ${payload.pageUrl}`,
       ]
         .filter(Boolean)

@@ -1,677 +1,556 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
+import {
+  budgetChoices,
+  getBudgetChoice,
+  getFloorPlanMatches,
+  getRoomChoice,
+  roomChoices,
+} from '@/data/floorplans';
 
-const QUIZ_STEPS = 5;
-const TOTAL_STEPS = 6;
+const OPEN_EVENT = 'open-floorplan-quiz';
 
-const stepTitles = [
-  'Тип квартиры',
-  'Бюджет',
-  'Приоритеты',
-  'Способ покупки',
-  'Первоначальный взнос',
-  'Контакты',
-];
-
-const apartmentTypeOptions = [
-  { label: 'Студия', value: 'studio' },
-  { label: '1-комнатная', value: '1room' },
-  { label: '2-комнатная', value: '2rooms' },
-  { label: '3-комнатная', value: '3rooms' },
-  { label: '4+ комнат', value: '4plus' },
-  { label: 'Ещё выбираю', value: 'choosing' },
-];
-
-const budgetOptions = [
-  { label: '5–7 млн', value: '5_to_7' },
-  { label: '7–10 млн', value: '7_to_10' },
-  { label: '10+ млн', value: '10_plus' },
-];
-
-const priorityOptions = [
-  { label: 'Цена и выгодные условия', value: 'price' },
-  { label: 'Локация / транспорт', value: 'location' },
-  { label: 'Новый дом и качество строительства', value: 'quality' },
-  { label: 'Инфраструктура (школы/сад/магазины)', value: 'infrastructure' },
-  { label: 'Планировка и метраж', value: 'layout' },
-  { label: 'Для инвестиций (рост цены / аренда)', value: 'investment' },
-];
-
-const purchaseMethodOptions = [
-  { label: 'Наличные', value: 'cash' },
-  { label: 'Ипотека', value: 'mortgage' },
-  { label: 'Ещё не решил(а), нужна консультация', value: 'need_consultation' },
-];
-
-const downPaymentOptions = [
-  { label: 'Только маткапитал', value: 'only_maternal' },
-  { label: 'Маткапитал + свои средства', value: 'maternal_plus_own' },
-  { label: 'Только свои средства (наличные)', value: 'only_own' },
-  { label: 'Пока не знаю / нужна консультация', value: 'need_advice' },
-];
-
-const initialAnswers = {
-  apartmentType: '',
-  budgetPreset: '',
-  priority: '',
-  purchaseMethod: '',
-  cashAmount: null,
-  downPaymentType: '',
-  ownFundsAmount: null,
-  consultationFromBudget: false,
-  name: '',
-  phone: '',
-  telegram: '',
-  company: '',
-  privacyConsent: false,
+const stepMeta = {
+  budget: { index: 1, label: 'Бюджет', progress: 33 },
+  rooms: { index: 2, label: 'Комнатность', progress: 66 },
+  results: { index: 3, label: 'Подборка', progress: 100 },
 };
 
-function formatNumber(val) {
-  const digits = String(val).replace(/\D/g, '');
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+const emptyLead = {
+  name: '',
+  phone: '',
+  company: '',
+};
+
+function getPlanWord(count) {
+  if (count === 1) return 'планировку';
+  if (count > 1 && count < 5) return 'планировки';
+  return 'планировок';
 }
 
-function isIncompatible(answers) {
-  return (
-    answers.budgetPreset === '5_to_7' &&
-    ['2rooms', '3rooms', '4plus'].includes(answers.apartmentType)
-  );
+function formatArea(area) {
+  return new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(area);
 }
 
-function getNextStep(step, answers) {
-  if (step === 4) {
-    return answers.purchaseMethod === 'mortgage' ? 5 : TOTAL_STEPS;
-  }
-  if (step === 5) return TOTAL_STEPS;
-  return step + 1;
+function getResultIntro(hasExactMatches) {
+  return hasExactMatches
+    ? 'Показываем найденные варианты по вашим параметрам.'
+    : 'Точных вариантов в бюджете пока нет, поэтому показываем ближайшие найденные планировки.';
 }
 
-function getPrevStep(step, answers) {
-  if (step === TOTAL_STEPS) {
-    if (answers.consultationFromBudget) return 2;
-    if (answers.purchaseMethod === 'mortgage') return 5;
-    return 4;
-  }
-  return step - 1;
+function serializePlan(plan) {
+  return {
+    id: plan.id,
+    complex: plan.complex,
+    title: plan.title,
+    rooms: plan.roomLabel,
+    area: plan.area,
+    price: plan.priceLabel,
+    caption: plan.caption,
+    source: `${plan.sourceName}, проверено ${plan.sourceChecked}`,
+  };
 }
 
 export default function LeadFormSection() {
-  const [leadAnswers, setLeadAnswers] = useState(initialAnswers);
-  const [open, setOpen] = useState(false);
-  const [modalStep, setModalStep] = useState(1);
-  const [embeddedStep, setEmbeddedStep] = useState(1);
+  const [open, setOpen] = useState(true);
+  const [step, setStep] = useState('budget');
+  const [budget, setBudget] = useState(null);
+  const [rooms, setRooms] = useState(null);
+  const [lead, setLead] = useState(emptyLead);
   const [done, setDone] = useState(false);
-  const [submitErrorMessage, setSubmitErrorMessage] = useState('');
-  const [embeddedDone, setEmbeddedDone] = useState(false);
+  const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const contentRef = useRef(null);
+
+  const selectedBudget = budget ? getBudgetChoice(budget) : null;
+  const selectedRooms = rooms ? getRoomChoice(rooms) : null;
+  const currentMeta = stepMeta[step];
+
+  const matchedPlans = useMemo(() => {
+    if (!budget || !rooms) return [];
+    return getFloorPlanMatches(budget, rooms);
+  }, [budget, rooms]);
+
+  const hasExactBudgetMatches = useMemo(() => {
+    if (!budget || !rooms) return true;
+
+    const maxPrice = selectedBudget?.maxPriceRub ?? null;
+    return matchedPlans.some((plan) => {
+      const priceFits = maxPrice === null || plan.priceRub <= maxPrice;
+      const roomsFit = rooms === 'any' || plan.rooms === rooms;
+      return priceFits && roomsFit;
+    });
+  }, [budget, matchedPlans, rooms, selectedBudget?.maxPriceRub]);
 
   useEffect(() => {
-    const flag = sessionStorage.getItem('leadModalClosed');
-    if (flag) return;
+    const openQuiz = () => {
+      setOpen(true);
+      setDone(false);
+      setError('');
+      setStep(budget && rooms ? 'results' : 'budget');
+    };
 
-    const openModal = () => setOpen(true);
-    let timeoutId;
+    const captureCtaClick = (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return;
 
-    if (typeof window.requestIdleCallback === 'function') {
-      timeoutId = window.requestIdleCallback(openModal, { timeout: 1500 });
-    } else {
-      timeoutId = setTimeout(openModal, 900);
-    }
+      const clickable = target.closest('a, button');
+      if (!clickable) return;
+
+      const text = clickable.textContent?.toLowerCase().trim() || '';
+      const href = clickable.getAttribute('href') || '';
+      const asksForSelection =
+        href === '#lead-form' ||
+        href === '/#lead-form' ||
+        text.includes('получить подбор') ||
+        text.includes('узнать цены') ||
+        text.includes('цены и планировки');
+
+      if (!asksForSelection) return;
+
+      event.preventDefault();
+      openQuiz();
+    };
+
+    window.addEventListener(OPEN_EVENT, openQuiz);
+    document.addEventListener('click', captureCtaClick);
 
     return () => {
-      if (typeof window.cancelIdleCallback === 'function' && typeof timeoutId === 'number') {
-        window.cancelIdleCallback(timeoutId);
-      } else {
-        clearTimeout(timeoutId);
-      }
+      window.removeEventListener(OPEN_EVENT, openQuiz);
+      document.removeEventListener('click', captureCtaClick);
     };
-  }, []);
+  }, [budget, rooms]);
 
-  const modalProgress = useMemo(() => {
-    if (done) return 100;
-    return Math.min(100, Math.max(0, Math.round((modalStep / TOTAL_STEPS) * 100)));
-  }, [done, modalStep]);
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 });
+  }, [step]);
 
-  const embeddedProgress = useMemo(() => {
-    if (embeddedDone) return 100;
-    return Math.min(100, Math.max(0, Math.round((embeddedStep / TOTAL_STEPS) * 100)));
-  }, [embeddedDone, embeddedStep]);
+  useEffect(() => {
+    if (!open) return undefined;
 
-  const closeModal = () => {
-    sessionStorage.setItem('leadModalClosed', '1');
-    setOpen(false);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open]);
+
+  const selectBudget = (value) => {
+    setBudget(value);
+    setError('');
+    setStep('rooms');
   };
 
-  const setValue = (key, value) => setLeadAnswers((prev) => ({ ...prev, [key]: value }));
-
-  const canProceed = (step) => {
-    if (step === 1) return Boolean(leadAnswers.apartmentType);
-    if (step === 2) return Boolean(leadAnswers.budgetPreset) && !isIncompatible(leadAnswers);
-    if (step === 3) return Boolean(leadAnswers.priority);
-    if (step === 4) return Boolean(leadAnswers.purchaseMethod);
-    if (step === 5) return Boolean(leadAnswers.downPaymentType);
-    return true;
+  const selectRooms = (value) => {
+    setRooms(value);
+    setError('');
+    setStep('results');
   };
 
-  const nextModal = () => setModalStep((prev) => getNextStep(prev, leadAnswers));
-  const prevModal = () => setModalStep((prev) => getPrevStep(prev, leadAnswers));
-  const nextEmbedded = () => setEmbeddedStep((prev) => getNextStep(prev, leadAnswers));
-  const prevEmbedded = () => setEmbeddedStep((prev) => getPrevStep(prev, leadAnswers));
-
-  const resetEmbedded = () => {
-    setEmbeddedDone(false);
-    setEmbeddedStep(1);
-    setLeadAnswers(initialAnswers);
-    setSubmitErrorMessage('');
+  const goBack = () => {
+    setError('');
+    if (step === 'results') setStep('rooms');
+    if (step === 'rooms') setStep('budget');
   };
 
-  const buildPayload = () => ({
-    name: leadAnswers.name,
-    phone: leadAnswers.phone,
-    privacyConsent: leadAnswers.privacyConsent,
-    source: 'main',
-    pageUrl: window.location.href,
-    createdAt: new Date().toISOString(),
-    company: leadAnswers.company,
-    answers: {
-      apartmentType: leadAnswers.apartmentType,
-      budgetPreset: leadAnswers.budgetPreset,
-      priority: leadAnswers.priority,
-      purchaseMethod: leadAnswers.purchaseMethod,
-      cashAmount: leadAnswers.cashAmount,
-      downPaymentType: leadAnswers.downPaymentType,
-      ownFundsAmount: leadAnswers.ownFundsAmount,
-      consultationFromBudget: leadAnswers.consultationFromBudget,
-      telegram: leadAnswers.telegram,
-    },
-    utm: {
-      source: new URLSearchParams(window.location.search).get('utm_source') || '',
-      medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
-      campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
-      term: new URLSearchParams(window.location.search).get('utm_term') || '',
-      content: new URLSearchParams(window.location.search).get('utm_content') || '',
-    },
-  });
+  const restart = () => {
+    setBudget(null);
+    setRooms(null);
+    setLead(emptyLead);
+    setDone(false);
+    setError('');
+    setStep('budget');
+    setOpen(true);
+  };
 
-  const submitLead = async () => {
-    if (isSubmitting) return false;
+  const handleSubmit = async (event) => {
+    event.preventDefault();
 
-    if (!leadAnswers.name.trim()) {
-      setSubmitErrorMessage('Укажите ваше имя.');
-      return false;
-    }
-    if (!leadAnswers.phone.trim()) {
-      setSubmitErrorMessage('Укажите номер телефона.');
-      return false;
-    }
-    if (!leadAnswers.privacyConsent) {
-      setSubmitErrorMessage('Необходимо согласие на обработку персональных данных.');
-      return false;
+    const cleanName = lead.name.trim();
+    const cleanPhone = lead.phone.trim();
+
+    if (cleanName.length < 2) {
+      setError('Укажите имя, чтобы менеджер понял, как к вам обращаться.');
+      return;
     }
 
-    const payload = buildPayload();
+    if (!/^\+?[0-9\s\-()]{10,}$/.test(cleanPhone)) {
+      setError('Укажите корректный номер телефона.');
+      return;
+    }
+
     setIsSubmitting(true);
-    setSubmitErrorMessage('');
+    setError('');
 
     try {
       const response = await fetch('/api/lead', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          name: cleanName,
+          phone: cleanPhone,
+          privacyConsent: true,
+          source: 'floorplan_quiz_popup',
+          pageUrl: window.location.href,
+          createdAt: new Date().toISOString(),
+          company: lead.company,
+          answers: {
+            quiz: 'floorplan_quiz_popup',
+            budgetPreset: selectedBudget?.value || '',
+            budget: selectedBudget?.label || '',
+            apartmentType: selectedRooms?.value || '',
+            rooms: selectedRooms?.label || '',
+            matchedPlans: matchedPlans.map(serializePlan),
+          },
+          utm: {
+            source: new URLSearchParams(window.location.search).get('utm_source') || '',
+            medium: new URLSearchParams(window.location.search).get('utm_medium') || '',
+            campaign: new URLSearchParams(window.location.search).get('utm_campaign') || '',
+            term: new URLSearchParams(window.location.search).get('utm_term') || '',
+            content: new URLSearchParams(window.location.search).get('utm_content') || '',
+          },
+        }),
       });
 
       let data = {};
       try {
         data = await response.json();
       } catch (parseError) {
-        console.error('[LeadForm] failed to parse response JSON:', parseError);
+        console.error('[FloorplanQuiz] failed to parse response JSON:', parseError);
       }
 
-      if (response.ok && (data?.success === true || data?.ok === true)) {
-        if (typeof window !== 'undefined' && typeof window.ym === 'function') {
-          window.ym(107023721, 'reachGoal', 'lead_submit');
-        }
-        return true;
+      if (!response.ok || !(data?.success === true || data?.ok === true)) {
+        throw new Error(data?.message || 'Не удалось отправить заявку. Попробуйте ещё раз.');
       }
 
-      const msg = data?.message || 'Не удалось отправить. Попробуйте ещё раз.';
-      console.error('[LeadForm] submit error — response.ok:', response.ok, '| data:', data);
-      setSubmitErrorMessage(msg);
-      return false;
-    } catch (error) {
-      console.error('[LeadForm] submit failed:', error);
-      setSubmitErrorMessage('Не удалось отправить. Попробуйте ещё раз.');
-      return false;
+      if (typeof window !== 'undefined' && typeof window.ym === 'function') {
+        window.ym(107023721, 'reachGoal', 'lead_submit');
+      }
+
+      setDone(true);
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error
+          ? submitError.message
+          : 'Не удалось отправить заявку. Попробуйте ещё раз.'
+      );
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const submit = async (event) => {
-    event.preventDefault();
-    const ok = await submitLead();
-    if (ok) setDone(true);
-  };
-
-  const submitEmbedded = async (event) => {
-    event.preventDefault();
-    const ok = await submitLead();
-    if (ok) setEmbeddedDone(true);
-  };
-
-  const stepLabel = (step) =>
-    step <= QUIZ_STEPS ? `Вопрос ${step} из ${QUIZ_STEPS}` : 'Контакты';
-
-  const renderStep = (step, setStep) => {
-    if (step === 1) {
-      return (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Какую квартиру Вы рассматриваете?</p>
-          <InlineChoice
-            options={apartmentTypeOptions.map((o) => o.label)}
-            value={apartmentTypeOptions.find((o) => o.value === leadAnswers.apartmentType)?.label || ''}
-            onSelect={(label) => {
-              const opt = apartmentTypeOptions.find((o) => o.label === label);
-              if (!opt) return;
-              setLeadAnswers((prev) => ({
-                ...prev,
-                apartmentType: opt.value,
-                ...(prev.apartmentType !== opt.value
-                  ? {
-                      budgetPreset: '',
-                      priority: '',
-                      purchaseMethod: '',
-                      cashAmount: null,
-                      downPaymentType: '',
-                      ownFundsAmount: null,
-                      consultationFromBudget: false,
-                    }
-                  : {}),
-              }));
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (step === 2) {
-      const incompatible = isIncompatible(leadAnswers);
-      return (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">На какой бюджет Вы ориентируетесь?</p>
-          <InlineChoice
-            options={budgetOptions.map((o) => o.label)}
-            value={budgetOptions.find((o) => o.value === leadAnswers.budgetPreset)?.label || ''}
-            onSelect={(label) => {
-              const opt = budgetOptions.find((o) => o.label === label);
-              if (!opt) return;
-              setLeadAnswers((prev) => ({
-                ...prev,
-                budgetPreset: opt.value,
-                ...(prev.budgetPreset !== opt.value
-                  ? {
-                      priority: '',
-                      purchaseMethod: '',
-                      cashAmount: null,
-                      downPaymentType: '',
-                      ownFundsAmount: null,
-                      consultationFromBudget: false,
-                    }
-                  : {}),
-              }));
-            }}
-          />
-          {incompatible && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 space-y-3">
-              <p className="text-sm text-red-700 leading-relaxed">
-                К сожалению, в текущих рыночных условиях мы не сможем подобрать вам квартиру
-                такого метража в этом бюджете. Давайте обсудим варианты на консультации.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setLeadAnswers((prev) => ({ ...prev, consultationFromBudget: true }));
-                    setStep(TOTAL_STEPS);
-                  }}
-                >
-                  Проконсультироваться
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setStep(1)}
-                >
-                  Изменить параметры
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (step === 3) {
-      return (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Что для Вас самое важное в выборе?</p>
-          <InlineChoice
-            options={priorityOptions.map((o) => o.label)}
-            value={priorityOptions.find((o) => o.value === leadAnswers.priority)?.label || ''}
-            onSelect={(label) => {
-              const opt = priorityOptions.find((o) => o.label === label);
-              if (!opt) return;
-              setLeadAnswers((prev) => ({
-                ...prev,
-                priority: opt.value,
-                ...(prev.priority !== opt.value
-                  ? {
-                      purchaseMethod: '',
-                      cashAmount: null,
-                      downPaymentType: '',
-                      ownFundsAmount: null,
-                    }
-                  : {}),
-              }));
-            }}
-          />
-        </div>
-      );
-    }
-
-    if (step === 4) {
-      return (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Как Вы планируете покупать?</p>
-          <InlineChoice
-            options={purchaseMethodOptions.map((o) => o.label)}
-            value={purchaseMethodOptions.find((o) => o.value === leadAnswers.purchaseMethod)?.label || ''}
-            onSelect={(label) => {
-              const opt = purchaseMethodOptions.find((o) => o.label === label);
-              if (!opt) return;
-              setLeadAnswers((prev) => ({
-                ...prev,
-                purchaseMethod: opt.value,
-                ...(prev.purchaseMethod !== opt.value
-                  ? { cashAmount: null, downPaymentType: '', ownFundsAmount: null }
-                  : {}),
-              }));
-            }}
-          />
-          {leadAnswers.purchaseMethod === 'cash' && (
-            <div className="space-y-2">
-              <label className="text-sm text-[color:var(--muted)]">Какой суммой располагаете?</label>
-              <input
-                className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
-                placeholder="Например: 5 000 000 ₽"
-                inputMode="numeric"
-                value={leadAnswers.cashAmount != null ? formatNumber(leadAnswers.cashAmount) + ' ₽' : ''}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, '');
-                  setValue('cashAmount', digits || null);
-                }}
-              />
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (step === 5) {
-      const needsAmount = ['maternal_plus_own', 'only_own'].includes(leadAnswers.downPaymentType);
-      const amountLabel =
-        leadAnswers.downPaymentType === 'maternal_plus_own'
-          ? 'Сколько собственных средств готовы добавить к маткапиталу?'
-          : 'Какую сумму готовы внести как первоначальный взнос?';
-
-      return (
-        <div className="space-y-3">
-          <p className="text-sm font-medium">Как Вы планируете формировать первоначальный взнос?</p>
-          <InlineChoice
-            options={downPaymentOptions.map((o) => o.label)}
-            value={downPaymentOptions.find((o) => o.value === leadAnswers.downPaymentType)?.label || ''}
-            onSelect={(label) => {
-              const opt = downPaymentOptions.find((o) => o.label === label);
-              if (!opt) return;
-              setLeadAnswers((prev) => ({
-                ...prev,
-                downPaymentType: opt.value,
-                ...(prev.downPaymentType !== opt.value ? { ownFundsAmount: null } : {}),
-              }));
-            }}
-          />
-          {needsAmount && (
-            <div className="space-y-2">
-              <label className="text-sm text-[color:var(--muted)]">{amountLabel}</label>
-              <input
-                className="focus-ring w-full rounded-xl border border-[color:var(--border)] px-4 py-3"
-                placeholder="Например: 800 000 ₽"
-                inputMode="numeric"
-                value={leadAnswers.ownFundsAmount != null ? formatNumber(leadAnswers.ownFundsAmount) + ' ₽' : ''}
-                onChange={(e) => {
-                  const digits = e.target.value.replace(/\D/g, '');
-                  setValue('ownFundsAmount', digits || null);
-                }}
-              />
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // Step 6 — contacts (unchanged)
-    return (
-      <div className="grid gap-3">
-        <p className="text-sm text-[color:var(--muted)]">Оставьте контакты — вышлем подборку и поможем с ипотекой</p>
-        <input
-          className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3"
-          placeholder="Ваше имя"
-          value={leadAnswers.name}
-          onChange={(e) => setValue('name', e.target.value)}
-          required
-        />
-        <input
-          className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3"
-          placeholder="Номер телефона"
-          type="tel"
-          value={leadAnswers.phone}
-          onChange={(e) => setValue('phone', e.target.value)}
-          required
-        />
-        <input
-          className="focus-ring rounded-xl border border-[color:var(--border)] px-4 py-3"
-          placeholder="Ваш Telegram (не обязательно)"
-          value={leadAnswers.telegram}
-          onChange={(e) => setValue('telegram', e.target.value)}
-        />
-        <label className="flex items-start gap-2.5 rounded-xl border border-[color:var(--border)] bg-[rgba(255,255,255,0.7)] px-3 py-2.5 text-xs leading-relaxed text-[color:var(--muted)] md:text-sm">
-          <input
-            type="checkbox"
-            className="mt-0.5 h-4 w-4 shrink-0 accent-[color:var(--accent2)]"
-            checked={leadAnswers.privacyConsent}
-            onChange={(e) => setValue('privacyConsent', e.target.checked)}
-            required
-          />
-          <span>
-            Нажимая кнопку, я даю согласие на обработку персональных данных в соответствии с{' '}
-            <Link
-              href="/privacy-policy"
-              target="_blank"
-              rel="noreferrer"
-              className="underline decoration-[color:var(--accent2)] underline-offset-2 transition hover:text-[color:var(--accent2)]"
-            >
-              Политикой конфиденциальности
-            </Link>
-            .
-          </span>
-        </label>
-        <input
-          tabIndex={-1}
-          autoComplete="off"
-          aria-hidden="true"
-          className="hidden"
-          name="company"
-          value={leadAnswers.company}
-          onChange={(e) => setValue('company', e.target.value)}
-        />
-      </div>
-    );
   };
 
   return (
     <>
       <section id="lead-form" className="py-12 md:py-16">
         <Container>
-          {!embeddedDone && (
-            <div className="mb-5 text-center md:text-left">
-              <h2 className="text-2xl font-bold tracking-tight text-[#111827] md:text-3xl">
-                Получите подборку квартир под ваш бюджет
-              </h2>
-              <div className="mt-3 flex flex-wrap justify-center gap-2 md:justify-start">
-                <span className="quiz-benefit-pill">→ 5–7 вариантов квартир</span>
-                <span className="quiz-benefit-pill">→ Расчёт ипотеки</span>
-                <span className="quiz-benefit-pill">→ Одобрение за 24 часа</span>
+          <Card className="embedded-lead-card reveal p-6 md:p-9">
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+              <div>
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em] text-[color:var(--accent)]">
+                  Быстрый подбор
+                </p>
+                <h2 className="max-w-3xl text-2xl font-bold leading-tight tracking-tight text-[#111827] md:text-3xl">
+                  Подберём планировки под ваш бюджет за 2 вопроса
+                </h2>
+                <p className="mt-3 max-w-2xl text-[color:var(--muted)]">
+                  Покажем реальные квартирные планировки из открытых источников, а менеджер уточнит наличие и свободные квартиры.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
+                <Button type="button" onClick={restart} className="px-6 py-4">
+                  Получить подборку
+                </Button>
+                <Button as="a" href="#complexes" variant="ghost" className="px-6 py-4">
+                  Смотреть ЖК
+                </Button>
               </div>
             </div>
-          )}
-
-          <Card className="embedded-lead-card reveal p-7 transition-colors duration-200 md:p-10">
-            <p className="mb-2 text-xs uppercase tracking-[0.2em] text-[rgba(17,24,39,0.55)]">Быстрый подбор</p>
-            <p className="mt-3 max-w-2xl text-[rgba(17,24,39,0.70)]">
-              5 вопросов — и мы пришлём варианты с ценами и планировками.
-            </p>
-
-            <div className="mb-2 mt-6 flex items-center justify-between text-xs text-[color:var(--muted)]">
-              <span>{embeddedDone ? 'Готово' : stepLabel(embeddedStep)}</span>
-              <span>{embeddedDone ? '100%' : `${embeddedProgress}%`}</span>
-            </div>
-            <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
-              <div
-                className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all"
-                style={{ width: `${embeddedProgress}%` }}
-              />
-            </div>
-
-            {embeddedDone ? (
-              <div className="space-y-5">
-                <h3 className="text-2xl tracking-tight">Заявка принята!</h3>
-                <p className="text-[color:var(--muted)]">Мы свяжемся с вами в течение 5 минут и пришлём подборку квартир.</p>
-                <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
-                <Button type="button" onClick={resetEmbedded}>Начать заново</Button>
-              </div>
-            ) : (
-              <form onSubmit={submitEmbedded} className="space-y-6">
-                <div key={`emb-${embeddedStep}`} className="quiz-step-animate">
-                  {renderStep(embeddedStep, setEmbeddedStep)}
-                </div>
-                <div className="mt-8 flex flex-wrap gap-3">
-                  {embeddedStep > 1 && (
-                    <Button type="button" variant="ghost" onClick={prevEmbedded}>
-                      Назад
-                    </Button>
-                  )}
-                  {embeddedStep < TOTAL_STEPS ? (
-                    <Button type="button" onClick={nextEmbedded} disabled={!canProceed(embeddedStep)}>
-                      Далее
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={
-                        isSubmitting ||
-                        !leadAnswers.name.trim() ||
-                        !leadAnswers.phone.trim() ||
-                        !leadAnswers.privacyConsent
-                      }
-                    >
-                      {isSubmitting ? 'Отправка...' : 'Получить подборку квартир'}
-                    </Button>
-                  )}
-                </div>
-                {submitErrorMessage && (
-                  <p className="text-sm text-red-500">{submitErrorMessage}</p>
-                )}
-              </form>
-            )}
           </Card>
         </Container>
       </section>
 
       {open && (
-        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/30 p-4 md:items-center">
-          <div className="w-full max-w-2xl rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[var(--shadowHover)] md:p-8">
-            <div className="mb-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[color:var(--accent)]">Получить подборку</p>
-                <h3 className="text-2xl tracking-tight">
-                  {done ? 'Заявка принята!' : stepTitles[modalStep - 1]}
-                </h3>
-              </div>
-              <button type="button" className="focus-ring rounded-lg px-2 py-1 text-sm" onClick={closeModal}>
-                Закрыть
-              </button>
-            </div>
-
-            {!done && (
-              <div className="mb-2 flex items-center justify-between text-xs text-[color:var(--muted)]">
-                <span>{stepLabel(modalStep)}</span>
-                <span>{modalProgress}%</span>
-              </div>
-            )}
-            <div className="mb-6 h-2 w-full overflow-hidden rounded-full bg-[color:var(--bg2)]">
-              <div
-                className="h-full max-w-full rounded-full bg-[color:var(--accent2)] transition-all"
-                style={{ width: `${modalProgress}%` }}
-              />
-            </div>
-
-            {done ? (
-              <div className="space-y-5">
-                <p className="text-[color:var(--muted)]">
-                  Мы свяжемся с вами в течение 5 минут и пришлём подборку квартир.
-                </p>
-                <p className="text-xs text-[color:var(--muted)]">Для вас это бесплатно — мою работу оплачивает застройщик.</p>
-                <Button onClick={closeModal}>Закрыть</Button>
-              </div>
-            ) : (
-              <form onSubmit={submit} className="space-y-6">
-                <div key={`mod-${modalStep}`} className="quiz-step-animate">
-                  {renderStep(modalStep, setModalStep)}
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {modalStep > 1 && (
-                    <Button type="button" variant="ghost" onClick={prevModal}>
-                      Назад
-                    </Button>
-                  )}
-                  {modalStep < TOTAL_STEPS ? (
-                    <Button type="button" onClick={nextModal} disabled={!canProceed(modalStep)}>
-                      Далее
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={
-                        isSubmitting ||
-                        !leadAnswers.name.trim() ||
-                        !leadAnswers.phone.trim() ||
-                        !leadAnswers.privacyConsent
-                      }
+        <div
+          className="fixed inset-0 z-[80] flex items-end justify-center bg-[rgba(17,24,39,0.42)] p-3 backdrop-blur-[3px] sm:items-center sm:p-5"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="floorplan-quiz-title"
+        >
+          <div className="relative w-full max-w-5xl overflow-hidden rounded-[24px] border border-white/70 bg-[#fbf7ef] shadow-[0_34px_110px_rgba(31,41,55,0.35)] sm:rounded-[30px]">
+            <div className="grid max-h-[calc(100dvh-1.5rem)] min-w-0 lg:grid-cols-[0.8fr_1.2fr]">
+              <aside className="relative min-w-0 overflow-hidden bg-[#1f2937] p-4 text-white sm:p-6 lg:p-7">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_6%,rgba(176,141,87,0.38),transparent_30%),linear-gradient(145deg,rgba(123,165,154,0.20),transparent_46%)]" />
+                <div className="relative">
+                  <div className="inline-flex rounded-full border border-white/12 bg-white/10 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-white/82">
+                    Быстрый подбор
+                  </div>
+                  <div className="mt-5">
+                    <p className="font-semibold text-[#d7c4a5]">
+                      2 вопроса и реальные планировки
+                    </p>
+                    <h3
+                      id="floorplan-quiz-title"
+                      className="mt-2 max-w-md text-[1.55rem] font-bold leading-tight tracking-tight text-white sm:text-3xl"
                     >
-                      {isSubmitting ? 'Отправка...' : 'Получить подборку квартир'}
-                    </Button>
-                  )}
+                      Квартиры в новостройках Луганска под ваш бюджет
+                    </h3>
+                  </div>
+
+                  <div className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                    {['Бюджет', 'Комнатность', 'Планировки'].map((item, index) => {
+                      const active = index + 1 <= currentMeta.index;
+                      return (
+                        <div
+                          key={item}
+                          className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm ${
+                            active
+                              ? 'border-[#d7c4a5]/45 bg-white/10 text-white'
+                              : 'border-white/10 bg-white/[0.03] text-white/52'
+                          }`}
+                        >
+                          <span
+                            className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${
+                              active ? 'bg-[#d7c4a5] text-[#1f2937]' : 'bg-white/10 text-white/55'
+                            }`}
+                          >
+                            {index + 1}
+                          </span>
+                          <span className="font-semibold">{item}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                {submitErrorMessage && (
-                  <p className="text-sm text-red-500">{submitErrorMessage}</p>
+              </aside>
+
+              <section ref={contentRef} className="min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-7">
+                <div className="mb-5">
+                  <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                    <span>
+                      Шаг {currentMeta.index} из 3 · {currentMeta.label}
+                    </span>
+                    <span>{currentMeta.progress}%</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-[#eadfcd]">
+                    <div
+                      className="h-full rounded-full bg-[color:var(--accent2)] transition-all"
+                      style={{ width: `${currentMeta.progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {done ? (
+                  <div className="min-w-0 py-4">
+                    <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
+                      Заявка принята
+                    </p>
+                    <h2 className="mt-2 text-[1.6rem] font-bold leading-tight tracking-tight sm:text-3xl">
+                      Подборка ушла менеджеру
+                    </h2>
+                    <p className="mt-3 text-sm leading-relaxed text-[color:var(--muted)]">
+                      Свяжемся с вами, уточним актуальное наличие и покажем свободные квартиры по выбранным параметрам.
+                    </p>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Button type="button" onClick={() => setOpen(false)}>
+                        Закрыть
+                      </Button>
+                      <Button type="button" variant="ghost" onClick={restart}>
+                        Начать заново
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {step === 'budget' && (
+                      <QuizQuestion
+                        title="На какой бюджет ориентируетесь?"
+                        description="Выберите верхнюю границу. Сначала фильтруем по цене, затем по комнатности."
+                      >
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {budgetChoices.map((choice) => (
+                            <ChoiceButton
+                              key={choice.value}
+                              active={budget === choice.value}
+                              title={choice.label}
+                              text={choice.value === 'to-6' ? 'покажем самые доступные варианты' : 'подберём планировки в диапазоне'}
+                              onClick={() => selectBudget(choice.value)}
+                            />
+                          ))}
+                        </div>
+                      </QuizQuestion>
+                    )}
+
+                    {step === 'rooms' && (
+                      <QuizQuestion
+                        title="Сколько комнат рассматриваете?"
+                        description="Планировки не кликабельны: это витрина найденных вариантов, дальше наличие уточнит менеджер."
+                      >
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {roomChoices.map((choice) => (
+                            <ChoiceButton
+                              key={choice.value}
+                              active={rooms === choice.value}
+                              title={choice.label}
+                              text={choice.value === 'any' ? 'покажем всё, что подходит по бюджету' : 'сравним найденные планировки'}
+                              onClick={() => selectRooms(choice.value)}
+                            />
+                          ))}
+                        </div>
+                      </QuizQuestion>
+                    )}
+
+                    {step === 'results' && (
+                      <div className="min-w-0">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
+                              Результат
+                            </p>
+                            <h2 className="mt-2 max-w-full break-words text-[1.55rem] font-bold leading-tight tracking-tight sm:text-3xl">
+                              Подобрали {matchedPlans.length} {getPlanWord(matchedPlans.length)} под ваш запрос
+                            </h2>
+                            <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+                              {selectedBudget?.label} · {selectedRooms?.label}. {getResultIntro(hasExactBudgetMatches)}
+                            </p>
+                          </div>
+                          <Button type="button" variant="ghost" className="w-fit rounded-full !px-4 !py-2" onClick={goBack}>
+                            ← Назад
+                          </Button>
+                        </div>
+
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                          {matchedPlans.map((plan) => (
+                            <article
+                              key={plan.id}
+                              className="min-w-0 overflow-hidden rounded-[22px] border border-[#eadfcd] bg-white shadow-sm"
+                            >
+                              <div className="relative aspect-[4/3] bg-[#fffdf8]">
+                                <Image
+                                  src={plan.image}
+                                  alt={`${plan.complex}: ${plan.title}`}
+                                  fill
+                                  sizes="(min-width: 1280px) 230px, (min-width: 640px) 45vw, 90vw"
+                                  className="object-contain p-2"
+                                />
+                              </div>
+                              <div className="space-y-3 p-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="rounded-full bg-[#f2eadf] px-2.5 py-1 text-[11px] font-bold text-[#6e5535]">
+                                    ЖК {plan.complex}
+                                  </span>
+                                  <span className="text-xs font-bold text-[color:var(--accent2)]">
+                                    {plan.priceLabel}
+                                  </span>
+                                </div>
+                                <div>
+                                  <h3 className="break-words text-sm font-bold leading-snug">
+                                    {plan.caption}
+                                  </h3>
+                                  <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
+                                    {plan.roomLabel} · {formatArea(plan.area)} м²
+                                  </p>
+                                </div>
+                                <p className="rounded-xl bg-[#fbf7ef] px-3 py-2 text-[11px] font-semibold leading-snug text-[color:var(--muted)]">
+                                  Источник: {plan.sourceName}, проверено {plan.sourceChecked}
+                                </p>
+                              </div>
+                            </article>
+                          ))}
+                        </div>
+
+                        <form
+                          onSubmit={handleSubmit}
+                          className="mt-5 grid gap-3 rounded-[24px] border border-[#eadfcd] bg-white p-4 sm:grid-cols-[1fr_1fr_auto]"
+                        >
+                          <div className="min-w-0">
+                            <label className="text-sm font-medium" htmlFor="floorplan-quiz-name">
+                              Имя
+                            </label>
+                            <input
+                              id="floorplan-quiz-name"
+                              value={lead.name}
+                              onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))}
+                              placeholder="Например, Анна"
+                              className="focus-ring mt-1.5 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
+                              autoComplete="name"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <label className="text-sm font-medium" htmlFor="floorplan-quiz-phone">
+                              Телефон
+                            </label>
+                            <input
+                              id="floorplan-quiz-phone"
+                              type="tel"
+                              value={lead.phone}
+                              onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))}
+                              placeholder="+7 999 123 45 67"
+                              className="focus-ring mt-1.5 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
+                              autoComplete="tel"
+                            />
+                          </div>
+                          <div className="flex items-end">
+                            <Button
+                              type="submit"
+                              disabled={isSubmitting}
+                              className="min-h-12 h-auto w-full px-5 py-3 text-center leading-tight sm:w-auto"
+                            >
+                              {isSubmitting ? 'Отправляем...' : 'Получить консультацию'}
+                            </Button>
+                          </div>
+                          <input
+                            tabIndex={-1}
+                            autoComplete="off"
+                            aria-hidden="true"
+                            className="hidden"
+                            name="company"
+                            value={lead.company}
+                            onChange={(event) => setLead((prev) => ({ ...prev, company: event.target.value }))}
+                          />
+                          <div className="sm:col-span-3">
+                            {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
+                            <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
+                              Нажимая кнопку, вы соглашаетесь с{' '}
+                              <Link
+                                href="/privacy-policy"
+                                className="font-semibold text-[color:var(--accent2)] underline-offset-4 hover:underline"
+                              >
+                                политикой конфиденциальности
+                              </Link>
+                              . Цены являются ориентиром по открытым источникам и уточняются перед бронью.
+                            </p>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+
+                    {step !== 'budget' && step !== 'results' && (
+                      <Button type="button" variant="ghost" className="mt-5 rounded-full !px-4 !py-2" onClick={goBack}>
+                        ← Назад
+                      </Button>
+                    )}
+                  </>
                 )}
-              </form>
-            )}
+              </section>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Закрыть квиз"
+              className="focus-ring absolute right-5 top-5 z-[81] grid h-9 w-9 place-items-center rounded-full border border-white/45 bg-white/80 text-xl leading-none text-[#1f2937] shadow-sm transition hover:bg-white"
+              onClick={() => setOpen(false)}
+            >
+              ×
+            </button>
           </div>
         </div>
       )}
@@ -679,26 +558,50 @@ export default function LeadFormSection() {
   );
 }
 
-function InlineChoice({ title, options, value, onSelect }) {
+function QuizQuestion({ title, description, children }) {
   return (
-    <div>
-      {title && <p className="mb-3 text-sm font-medium">{title}</p>}
-      <div className="grid gap-2">
-        {options.map((option) => (
-          <button
-            key={option}
-            type="button"
-            onClick={() => onSelect(option)}
-            className={`focus-ring rounded-xl border px-4 py-3 text-left text-sm transition ${
-              value === option
-                ? 'border-[color:var(--accent2)] bg-[color:var(--bg2)]'
-                : 'border-[color:var(--border)] hover:border-[color:var(--borderStrong)]'
-            }`}
-          >
-            {option}
-          </button>
-        ))}
-      </div>
+    <div className="min-w-0">
+      <h2 className="max-w-full break-words text-[1.55rem] font-bold leading-tight tracking-tight sm:text-3xl">
+        {title}
+      </h2>
+      <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">{description}</p>
+      <div className="mt-5">{children}</div>
     </div>
   );
+}
+
+function ChoiceButton({ active, title, text, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`focus-ring group flex min-h-[92px] w-full items-start justify-between gap-3 rounded-[22px] border p-4 text-left transition ${
+        active
+          ? 'border-[color:var(--accent2)] bg-[color:var(--accent2)] text-white shadow-[0_16px_30px_rgba(123,165,154,0.24)]'
+          : 'border-[#eadfcd] bg-white hover:border-[color:var(--accent2)] hover:bg-[#fffaf2]'
+      }`}
+    >
+      <span className="min-w-0">
+        <span className="block break-words text-base font-bold leading-tight">{title}</span>
+        <span className={`mt-1.5 block text-xs font-semibold leading-snug ${active ? 'text-white/76' : 'text-[color:var(--muted)]'}`}>
+          {text}
+        </span>
+      </span>
+      <span
+        className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border text-[10px] transition ${
+          active
+            ? 'border-white bg-white text-[color:var(--accent2)]'
+            : 'border-[#d7c5aa] text-transparent group-hover:border-[color:var(--accent2)]'
+        }`}
+        aria-hidden="true"
+      >
+        ✓
+      </span>
+    </button>
+  );
+}
+
+export function openFloorplanQuiz() {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new Event(OPEN_EVENT));
 }
