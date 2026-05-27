@@ -15,6 +15,8 @@ import {
 } from '@/data/floorplans';
 
 const OPEN_EVENT = 'open-floorplan-quiz';
+const LANDING_SOURCE = 'svoydom_lugansk';
+const FORM_SECTION = 'floorplan_quiz_popup';
 
 const stepMeta = {
   budget: { index: 1, label: 'Бюджет', progress: 33 },
@@ -69,7 +71,12 @@ export default function LeadFormSection() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const modalRef = useRef(null);
   const contentRef = useRef(null);
+  const formRef = useRef(null);
+  const nameInputRef = useRef(null);
+  const lockedScrollYRef = useRef(0);
+  const bodyStyleRef = useRef({});
 
   const selectedBudget = budget ? getBudgetChoice(budget) : null;
   const selectedRooms = rooms ? getRoomChoice(rooms) : null;
@@ -137,12 +144,48 @@ export default function LeadFormSection() {
   useEffect(() => {
     if (!open) return undefined;
 
-    const originalOverflow = document.body.style.overflow;
+    lockedScrollYRef.current = window.scrollY;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+    bodyStyleRef.current = {
+      overflow: document.body.style.overflow,
+      position: document.body.style.position,
+      top: document.body.style.top,
+      left: document.body.style.left,
+      right: document.body.style.right,
+      width: document.body.style.width,
+    };
+
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${lockedScrollYRef.current}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    document.documentElement.style.overflow = 'hidden';
+
     return () => {
-      document.body.style.overflow = originalOverflow;
+      document.body.style.overflow = bodyStyleRef.current.overflow || '';
+      document.body.style.position = bodyStyleRef.current.position || '';
+      document.body.style.top = bodyStyleRef.current.top || '';
+      document.body.style.left = bodyStyleRef.current.left || '';
+      document.body.style.right = bodyStyleRef.current.right || '';
+      document.body.style.width = bodyStyleRef.current.width || '';
+      document.documentElement.style.overflow = originalHtmlOverflow;
+      window.scrollTo(0, lockedScrollYRef.current);
     };
   }, [open]);
+
+  const scrollToContactForm = () => {
+    if (modalRef.current && formRef.current) {
+      const modalRect = modalRef.current.getBoundingClientRect();
+      const formRect = formRef.current.getBoundingClientRect();
+      const targetTop = formRect.top - modalRect.top + modalRef.current.scrollTop - 16;
+      modalRef.current.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+    }
+
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    window.setTimeout(() => nameInputRef.current?.focus({ preventScroll: true }), 420);
+  };
 
   const selectBudget = (value) => {
     setBudget(value);
@@ -199,12 +242,13 @@ export default function LeadFormSection() {
           name: cleanName,
           phone: cleanPhone,
           privacyConsent: true,
-          source: 'floorplan_quiz_popup',
+          source: LANDING_SOURCE,
           pageUrl: window.location.href,
           createdAt: new Date().toISOString(),
           company: lead.company,
           answers: {
             quiz: 'floorplan_quiz_popup',
+            formSection: FORM_SECTION,
             budgetPreset: selectedBudget?.value || '',
             budget: selectedBudget?.label || '',
             apartmentType: selectedRooms?.value || '',
@@ -280,13 +324,13 @@ export default function LeadFormSection() {
 
       {open && (
         <div
-          className="fixed inset-0 z-[80] flex items-end justify-center bg-[rgba(17,24,39,0.42)] p-3 backdrop-blur-[3px] sm:items-center sm:p-5"
+          className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto overscroll-contain bg-[rgba(17,24,39,0.42)] p-3 backdrop-blur-[3px] sm:items-center sm:p-5"
           role="dialog"
           aria-modal="true"
           aria-labelledby="floorplan-quiz-title"
         >
-          <div className="relative w-full max-w-5xl overflow-hidden rounded-[24px] border border-white/70 bg-[#fbf7ef] shadow-[0_34px_110px_rgba(31,41,55,0.35)] sm:rounded-[30px]">
-            <div className="grid max-h-[calc(100dvh-1.5rem)] min-w-0 lg:grid-cols-[0.8fr_1.2fr]">
+          <div ref={modalRef} className="relative my-auto w-full max-w-5xl max-h-[calc(100dvh-1.5rem)] overflow-y-auto overscroll-contain rounded-[24px] border border-white/70 bg-[#fbf7ef] shadow-[0_34px_110px_rgba(31,41,55,0.35)] sm:rounded-[30px]">
+            <div className="grid min-w-0 lg:max-h-[calc(100dvh-1.5rem)] lg:grid-cols-[0.8fr_1.2fr]">
               <aside className="relative min-w-0 overflow-hidden bg-[#1f2937] p-4 text-white sm:p-6 lg:p-7">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_6%,rgba(176,141,87,0.38),transparent_30%),linear-gradient(145deg,rgba(123,165,154,0.20),transparent_46%)]" />
                 <div className="relative">
@@ -332,7 +376,7 @@ export default function LeadFormSection() {
                 </div>
               </aside>
 
-              <section ref={contentRef} className="min-w-0 overflow-y-auto p-4 sm:p-6 lg:p-7">
+              <section ref={contentRef} className="min-w-0 p-4 sm:p-6 lg:overflow-y-auto lg:p-7">
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--muted)]">
                     <span>
@@ -427,11 +471,19 @@ export default function LeadFormSection() {
                           </Button>
                         </div>
 
-                        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                        <p className="mt-4 rounded-2xl border border-[#eadfcd] bg-white/70 px-4 py-3 text-sm font-medium leading-relaxed text-[color:var(--muted)]">
+                          Нажмите на любую планировку, и мы сразу переведём вас к форме связи для уточнения цены, этажа и свободных квартир.
+                        </p>
+
+                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
                           {matchedPlans.map((plan) => (
-                            <article
+                            <button
                               key={plan.id}
-                              className="min-w-0 overflow-hidden rounded-[22px] border border-[#eadfcd] bg-white shadow-sm"
+                              type="button"
+                              onClick={scrollToContactForm}
+                              data-complex={plan.complex}
+                              className="focus-ring group min-w-0 overflow-hidden rounded-[22px] border border-[#eadfcd] bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--accent2)] hover:shadow-[0_16px_36px_rgba(31,41,55,0.12)]"
+                              aria-label={`Оставить контакт по планировке ${plan.complex}, ${plan.title}`}
                             >
                               <div className="relative aspect-[4/3] bg-[#fffdf8]">
                                 <Image
@@ -462,12 +514,16 @@ export default function LeadFormSection() {
                                 <p className="rounded-xl bg-[#fbf7ef] px-3 py-2 text-[11px] font-semibold leading-snug text-[color:var(--muted)]">
                                   Источник: {plan.sourceName}, проверено {plan.sourceChecked}
                                 </p>
+                                <p className="text-xs font-bold text-[color:var(--accent2)] transition group-hover:translate-x-0.5">
+                                  Уточнить наличие →
+                                </p>
                               </div>
-                            </article>
+                            </button>
                           ))}
                         </div>
 
                         <form
+                          ref={formRef}
                           onSubmit={handleSubmit}
                           className="mt-5 grid gap-3 rounded-[24px] border border-[#eadfcd] bg-white p-4 sm:grid-cols-[1fr_1fr_auto]"
                         >
@@ -476,6 +532,7 @@ export default function LeadFormSection() {
                               Имя
                             </label>
                             <input
+                              ref={nameInputRef}
                               id="floorplan-quiz-name"
                               value={lead.name}
                               onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))}

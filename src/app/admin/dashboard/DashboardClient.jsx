@@ -9,6 +9,14 @@ const STATUS_COLORS = {
   in_progress: 'bg-yellow-100 text-yellow-700',
   closed:      'bg-green-100 text-green-700',
 };
+const SOURCE_LABELS = {
+  svoydom_lugansk: 'СвойДом',
+  noviyadres: 'Новый Адрес',
+};
+const SOURCE_COLORS = {
+  svoydom_lugansk: 'bg-emerald-100 text-emerald-700',
+  noviyadres: 'bg-amber-100 text-amber-700',
+};
 const STATUSES = ['new', 'in_progress', 'closed'];
 const FILTER_OPTIONS = [
   { value: '',            label: 'Все' },
@@ -69,6 +77,11 @@ function formatMessage(message) {
 function formatDate(value) {
   if (!value) return '—';
   return new Intl.DateTimeFormat('ru-RU', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value));
+}
+
+function formatSource(source) {
+  if (!source) return 'Не указан';
+  return SOURCE_LABELS[source] || source;
 }
 
 function urlBase64ToUint8Array(base64String) {
@@ -559,6 +572,7 @@ export default function DashboardClient({ user }) {
                           <td className="p-3"><div className="h-4 w-24 animate-pulse rounded bg-gray-200" /></td>
                           <td className="p-3"><div className="h-4 w-28 animate-pulse rounded bg-gray-200" /></td>
                           <td className="p-3"><div className="h-4 w-28 animate-pulse rounded bg-gray-200" /></td>
+                          <td className="p-3"><div className="h-5 w-20 animate-pulse rounded-full bg-gray-200" /></td>
                           <td className="p-3"><div className="h-4 w-48 animate-pulse rounded bg-gray-200" /></td>
                           <td className="p-3"><div className="h-5 w-16 animate-pulse rounded-full bg-gray-200" /></td>
                           {isAdmin && <td className="p-3"><div className="h-6 w-24 animate-pulse rounded-lg bg-gray-200" /></td>}
@@ -577,6 +591,7 @@ export default function DashboardClient({ user }) {
                     <thead className="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
                       <tr>
                         <th className="p-3">Дата</th>
+                        <th className="p-3">Источник</th>
                         <th className="p-3">Имя</th>
                         <th className="p-3">Телефон</th>
                         <th className="p-3">Сообщение</th>
@@ -590,6 +605,11 @@ export default function DashboardClient({ user }) {
                       {leads.map((lead) => (
                         <tr key={lead.id} className="border-t border-slate-100 align-top">
                           <td className="whitespace-nowrap p-3 text-slate-500">{formatDate(lead.created_at)}</td>
+                          <td className="whitespace-nowrap p-3">
+                            <span className={`rounded-full px-2 py-1 text-xs font-medium ${SOURCE_COLORS[lead.source] ?? 'bg-slate-100 text-slate-600'}`}>
+                              {formatSource(lead.source)}
+                            </span>
+                          </td>
                           <td className="p-3 font-medium">{lead.name || '—'}</td>
                           <td className="whitespace-nowrap p-3">
                             {lead.phone ? (

@@ -13,7 +13,7 @@ const fetchLeadsData = unstable_cache(
     ].filter(Boolean);
 
     const leads = await sql`
-      SELECT l.id, l.name, l.phone, l.message, l.status, l.assigned_to, l.created_at,
+      SELECT l.id, l.name, l.phone, l.message, l.source, l.status, l.assigned_to, l.created_at,
              u.name AS assigned_to_name,
              COUNT(c.id)::int AS comment_count,
              (SELECT text FROM comments WHERE lead_id = l.id ORDER BY created_at DESC LIMIT 1) AS last_comment_text

@@ -1215,12 +1215,44 @@ export function getFloorPlanMatches(budget, rooms) {
   const sortByPrice = (a, b) => a.priceRub - b.priceRub || a.area - b.area;
   const priceFits = (plan) => maxPrice === null || plan.priceRub <= maxPrice;
   const roomsFit = (plan) => rooms === "any" || plan.rooms === rooms;
+  const diversifyByComplex = (plans) => {
+    const sorted = [...plans].sort(sortByPrice);
+    const groups = new Map();
+
+    sorted.forEach((plan) => {
+      if (!groups.has(plan.complex)) groups.set(plan.complex, []);
+      groups.get(plan.complex).push(plan);
+    });
+
+    let complexOrder = [...groups.keys()].sort((a, b) => {
+      const firstA = groups.get(a)?.[0];
+      const firstB = groups.get(b)?.[0];
+      return sortByPrice(firstA, firstB);
+    });
+
+    const result = [];
+    while (result.length < 4 && complexOrder.length > 0) {
+      const nextOrder = [];
+
+      complexOrder.forEach((complex) => {
+        if (result.length >= 4) return;
+        const group = groups.get(complex);
+        const nextPlan = group?.shift();
+        if (nextPlan) result.push(nextPlan);
+        if (group?.length) nextOrder.push(complex);
+      });
+
+      complexOrder = nextOrder;
+    }
+
+    return result;
+  };
 
   const exactMatches = floorPlans.filter((plan) => priceFits(plan) && roomsFit(plan)).sort(sortByPrice);
-  if (exactMatches.length > 0) return exactMatches.slice(0, 4);
+  if (exactMatches.length > 0) return diversifyByComplex(exactMatches);
 
   const roomMatches = floorPlans.filter(roomsFit).sort(sortByPrice);
-  if (roomMatches.length > 0) return roomMatches.slice(0, 4);
+  if (roomMatches.length > 0) return diversifyByComplex(roomMatches);
 
-  return floorPlans.filter(priceFits).sort(sortByPrice).slice(0, 4);
+  return diversifyByComplex(floorPlans.filter(priceFits).sort(sortByPrice));
 }

@@ -6,6 +6,7 @@ import { getSql, ensureSchema } from '@/lib/admin/db';
 export const dynamic = 'force-dynamic';
 
 const STATUS_RU = { new: 'Новый', in_progress: 'В работе', closed: 'Закрыт' };
+const SOURCE_RU = { svoydom_lugansk: 'СвойДом', noviyadres: 'Новый Адрес' };
 
 function formatDate(value) {
   if (!value) return '';
@@ -39,7 +40,7 @@ export async function GET(request) {
   const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
 
   const rows = await sql.query(
-    `SELECT l.id, l.name, l.phone, l.message, l.status, l.assigned_to, l.created_at,
+    `SELECT l.id, l.name, l.phone, l.message, l.source, l.status, l.assigned_to, l.created_at,
             u.name AS assigned_to_name,
             (SELECT text FROM comments WHERE lead_id = l.id ORDER BY created_at DESC LIMIT 1) AS last_comment
      FROM leads l
@@ -50,10 +51,11 @@ export async function GET(request) {
   );
 
   const sheetData = [
-    ['№', 'Дата', 'Имя', 'Телефон', 'Сообщение', 'Статус', 'Назначен', 'Комментарий (последний)'],
+    ['№', 'Дата', 'Источник', 'Имя', 'Телефон', 'Сообщение', 'Статус', 'Назначен', 'Комментарий (последний)'],
     ...rows.map((r, i) => [
       i + 1,
       formatDate(r.created_at),
+      SOURCE_RU[r.source] ?? r.source ?? '',
       r.name || '',
       r.phone || '',
       r.message || '',
@@ -70,6 +72,7 @@ export async function GET(request) {
   ws['!cols'] = [
     { wch: 5 },  // №
     { wch: 18 }, // Дата
+    { wch: 16 }, // Источник
     { wch: 20 }, // Имя
     { wch: 18 }, // Телефон
     { wch: 40 }, // Сообщение

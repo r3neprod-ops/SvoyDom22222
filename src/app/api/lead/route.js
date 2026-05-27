@@ -8,6 +8,21 @@ import { getCorsHeaders, jsonWithCors } from '@/lib/cors';
 const DEDUPE_WINDOW_MS = 30 * 1000;
 const recentLeadStore = new Map();
 
+const SOURCE_ALIASES = {
+  svoydom_lugansk: 'svoydom_lugansk',
+  floorplan_quiz_popup: 'svoydom_lugansk',
+  main: 'svoydom_lugansk',
+  noviyadres: 'noviyadres',
+  landing_2: 'noviyadres',
+  main_quiz: 'noviyadres',
+  instant_floorplan_quiz: 'noviyadres',
+};
+
+const SOURCE_LABELS = {
+  svoydom_lugansk: 'СвойДом Луганск',
+  noviyadres: 'Новый Адрес',
+};
+
 const APARTMENT_TYPE_LABELS = {
   studio: 'Студия',
   '1room': '1-комнатная',
@@ -70,6 +85,22 @@ function mappedAnswer(value, map) {
   if (value === null || value === undefined || value === '') return '';
   const normalized = String(value).trim();
   return map[normalized] || humanizeFallback(normalized);
+}
+
+function normalizeLeadSource(payload) {
+  const rawSource = String(payload?.source ?? '').trim();
+  if (rawSource) return SOURCE_ALIASES[rawSource] || rawSource;
+
+  const pageUrl = String(payload?.pageUrl ?? '').toLowerCase();
+  if (pageUrl.includes('noviy-adres') || pageUrl.includes('noviyadres')) return 'noviyadres';
+  if (pageUrl.includes('svoydom')) return 'svoydom_lugansk';
+
+  return '';
+}
+
+function getSourceLabel(source) {
+  if (!source) return 'Не указан';
+  return SOURCE_LABELS[source] || source;
 }
 
 function formatMatchedPlans(value) {
@@ -175,13 +206,15 @@ async function sendToBitrix24(payload) {
   console.log('[Bitrix] Final URL:', finalUrl);
 
   const answers = asRecord(payload.answers);
+  const sourceLabel = getSourceLabel(payload.source);
   const bitrixPayload = {
     fields: {
-      TITLE: `[от Мента] Заявка: ${payload.name || '—'} ${payload.phone || '—'}`,
-      NAME: `${payload.name || ''} (от Мента)`,
+      TITLE: `[${sourceLabel}] Заявка: ${payload.name || '—'} ${payload.phone || '—'}`,
+      NAME: `${payload.name || ''} (${sourceLabel})`,
       PHONE: [{ VALUE: payload.phone || '', VALUE_TYPE: 'WORK' }],
       COMMENTS: [
-        '🟢 Источник: сайт (от Мента)',
+        `Лендинг: ${sourceLabel}`,
+        answers.formSection && `Форма: ${humanizeFallback(answers.formSection)}`,
         answers.consultationFromBudget && '⚠️ Запрос на консультацию: бюджет не соответствует желаемому метражу',
         answers.apartmentType && `Тип квартиры: ${mappedAnswer(answers.apartmentType, APARTMENT_TYPE_LABELS)}`,
         answers.budgetPreset && `Бюджет: ${mappedAnswer(answers.budgetPreset, BUDGET_LABELS)}`,
@@ -197,7 +230,7 @@ async function sendToBitrix24(payload) {
         .filter(Boolean)
         .join('\n'),
       SOURCE_ID: 'WEB',
-      SOURCE_DESCRIPTION: 'Лид с сайта (от Мента)',
+      SOURCE_DESCRIPTION: `Лид с сайта: ${sourceLabel}`,
     },
     params: { REGISTER_SONET_EVENT: 'Y' },
   };
@@ -264,6 +297,7 @@ export async function POST(request) {
     const safePayload = {
       ...payload,
       phone: phoneValidation.phone,
+      source: normalizeLeadSource(payload),
       privacyConsent: payload.privacyConsent === true,
       answers: asRecord(payload.answers),
     };
