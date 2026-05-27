@@ -24,6 +24,12 @@ const stepMeta = {
   results: { index: 3, label: 'Подборка', progress: 100 },
 };
 
+const sidebarSteps = [
+  { key: 'budget', label: 'Бюджет' },
+  { key: 'rooms', label: 'Комнатность' },
+  { key: 'results', label: 'Планировки' },
+];
+
 const emptyLead = {
   name: '',
   phone: '',
@@ -185,6 +191,20 @@ export default function LeadFormSection() {
 
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     window.setTimeout(() => nameInputRef.current?.focus({ preventScroll: true }), 420);
+  };
+
+  const canOpenSidebarStep = (targetStep) => {
+    if (targetStep === 'budget') return true;
+    if (targetStep === 'rooms') return Boolean(budget);
+    if (targetStep === 'results') return Boolean(budget && rooms);
+    return false;
+  };
+
+  const openSidebarStep = (targetStep) => {
+    if (!canOpenSidebarStep(targetStep)) return;
+    setError('');
+    setDone(false);
+    setStep(targetStep);
   };
 
   const selectBudget = (value) => {
@@ -350,26 +370,39 @@ export default function LeadFormSection() {
                   </div>
 
                   <div className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                    {['Бюджет', 'Комнатность', 'Планировки'].map((item, index) => {
-                      const active = index + 1 <= currentMeta.index;
+                    {sidebarSteps.map((item, index) => {
+                      const itemMeta = stepMeta[item.key];
+                      const completedOrCurrent = itemMeta.index <= currentMeta.index;
+                      const current = item.key === step;
+                      const reachable = canOpenSidebarStep(item.key);
                       return (
-                        <div
-                          key={item}
-                          className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm ${
-                            active
-                              ? 'border-[#d7c4a5]/45 bg-white/10 text-white'
-                              : 'border-white/10 bg-white/[0.03] text-white/52'
+                        <button
+                          key={item.key}
+                          type="button"
+                          onClick={() => openSidebarStep(item.key)}
+                          disabled={!reachable}
+                          aria-current={current ? 'step' : undefined}
+                          className={`focus-ring flex items-center gap-3 rounded-2xl border px-3 py-3 text-left text-sm transition ${
+                            current
+                              ? 'border-[#d7c4a5] bg-white/[0.14] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+                              : completedOrCurrent
+                                ? 'border-[#d7c4a5]/45 bg-white/10 text-white hover:border-[#d7c4a5]/70 hover:bg-white/[0.14]'
+                                : 'border-white/10 bg-white/[0.03] text-white/52'
+                          } ${
+                            reachable
+                              ? 'cursor-pointer hover:-translate-y-0.5'
+                              : 'cursor-not-allowed opacity-70'
                           }`}
                         >
                           <span
                             className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-bold ${
-                              active ? 'bg-[#d7c4a5] text-[#1f2937]' : 'bg-white/10 text-white/55'
+                              completedOrCurrent ? 'bg-[#d7c4a5] text-[#1f2937]' : 'bg-white/10 text-white/55'
                             }`}
                           >
                             {index + 1}
                           </span>
-                          <span className="font-semibold">{item}</span>
-                        </div>
+                          <span className="font-semibold">{item.label}</span>
+                        </button>
                       );
                     })}
                   </div>
@@ -603,7 +636,7 @@ export default function LeadFormSection() {
             <button
               type="button"
               aria-label="Закрыть квиз"
-              className="focus-ring absolute right-5 top-5 z-[81] grid h-9 w-9 place-items-center rounded-full border border-white/45 bg-white/80 text-xl leading-none text-[#1f2937] shadow-sm transition hover:bg-white"
+              className="focus-ring absolute right-4 top-4 z-[81] grid h-8 w-8 place-items-center rounded-full border border-[#eadfcd] bg-[#fbf7ef]/95 text-base font-semibold leading-none text-[#6e5535] shadow-[0_8px_22px_rgba(31,41,55,0.10)] transition hover:border-[#d7c4a5] hover:bg-white hover:text-[#1f2937] sm:right-5 sm:top-5"
               onClick={() => setOpen(false)}
             >
               ×
