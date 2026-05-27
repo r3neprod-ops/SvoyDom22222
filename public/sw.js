@@ -1,9 +1,9 @@
-const CACHE_NAME = 'svoydom-v1';
-const PRECACHE_URLS = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png'];
+const CACHE_NAME = 'svoydom-v2';
+const PRECACHE_URLS = ['/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)).catch(() => undefined)
   );
   self.skipWaiting();
 });
@@ -18,15 +18,26 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only cache GET requests for same-origin navigation and static assets
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/admin')) return;
 
+  if (event.request.mode === 'navigate' || event.request.headers.get('accept')?.includes('text/html')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  const cacheableStatic =
+    url.origin === self.location.origin &&
+    (url.pathname.startsWith('/_next/static/') ||
+      /\.(?:css|js|json|png|jpe?g|webp|svg|ico|woff2?)$/i.test(url.pathname));
+
+  if (!cacheableStatic) return;
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request).then((response) => {
-        if (response.ok && url.origin === self.location.origin) {
+        if (response.ok) {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, response.clone()));
         }
         return response;
