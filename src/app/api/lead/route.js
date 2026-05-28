@@ -11,6 +11,7 @@ const recentLeadStore = new Map();
 const SOURCE_ALIASES = {
   svoydom_lugansk: 'svoydom_lugansk',
   floorplan_quiz_popup: 'svoydom_lugansk',
+  unlock_layouts: 'svoydom_lugansk',
   main: 'svoydom_lugansk',
   noviyadres: 'noviyadres',
   landing_2: 'noviyadres',
@@ -25,15 +26,15 @@ const SOURCE_LABELS = {
 
 const APARTMENT_TYPE_LABELS = {
   studio: 'Студия',
-  '1room': '1-комнатная',
-  '1-room': '1-комнатная',
-  '2rooms': '2-комнатная',
-  '2-room': '2-комнатная',
-  '3rooms': '3-комнатная',
-  '3-room': '3-комнатная',
-  '4plus': '4+ комнат',
-  any: 'Ещё выбираю',
-  choosing: 'Ещё выбираю',
+  '1room': 'Однокомнатная квартира',
+  '1-room': 'Однокомнатная квартира',
+  '2rooms': 'Двухкомнатная квартира',
+  '2-room': 'Двухкомнатная квартира',
+  '3rooms': 'Трёхкомнатная квартира',
+  '3-room': 'Трёхкомнатная квартира',
+  '4plus': 'Четырёхкомнатная квартира или больше',
+  any: 'Пока не знаю, нужна консультация',
+  choosing: 'Пока не знаю, нужна консультация',
 };
 
 const BUDGET_LABELS = {
@@ -62,10 +63,19 @@ const PURCHASE_METHOD_LABELS = {
 };
 
 const DOWN_PAYMENT_LABELS = {
-  only_own:          'Только собственные средства',
-  only_maternal:     'Материнский капитал',
-  maternal_plus_own: 'Маткапитал + свои средства',
-  need_advice:       'Нужна консультация',
+  only_own: 'Только свои средства',
+  only_maternal: 'Материнский капитал',
+  maternal_plus_own: 'Материнский капитал и свои средства',
+  no_down_payment: 'Хочу узнать, можно ли без первоначального взноса',
+  need_advice: 'Пока не знаю',
+};
+
+const MONTHLY_PAYMENT_LABELS = {
+  up_to_20: 'До 20 000 ₽',
+  '20_to_30': '20 000–30 000 ₽',
+  '30_to_40': '30 000–40 000 ₽',
+  over_40: 'Больше 40 000 ₽',
+  payment_consultation: 'Пока не знаю, нужна консультация',
 };
 
 function humanizeFallback(value) {
@@ -223,6 +233,7 @@ async function sendToBitrix24(payload) {
         answers.cashAmount && `Сумма наличными: ${formatRubles(answers.cashAmount)}`,
         answers.downPaymentType && `Первоначальный взнос: ${mappedAnswer(answers.downPaymentType, DOWN_PAYMENT_LABELS)}`,
         answers.ownFundsAmount && `Собственные средства на взнос: ${formatRubles(answers.ownFundsAmount)}`,
+        answers.monthlyPayment && `Комфортный платёж: ${mappedAnswer(answers.monthlyPayment, MONTHLY_PAYMENT_LABELS)}`,
         answers.telegram && `Telegram: ${answers.telegram}`,
         ...formatMatchedPlans(answers.matchedPlans),
         payload.pageUrl && `Страница: ${payload.pageUrl}`,

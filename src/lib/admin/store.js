@@ -1,16 +1,16 @@
 import { getSql, ensureSchema } from './db';
 
 const APARTMENT_TYPE_LABELS = {
-  studio:   'Студия',
-  '1room':  '1-комнатная',
-  '1-room': '1-комнатная',
-  '2rooms': '2-комнатная',
-  '2-room': '2-комнатная',
-  '3rooms': '3-комнатная',
-  '3-room': '3-комнатная',
-  '4plus':  '4+ комнат',
-  any: 'Ещё выбираю',
-  choosing: 'Ещё выбираю',
+  studio: 'Студия',
+  '1room': 'Однокомнатная квартира',
+  '1-room': 'Однокомнатная квартира',
+  '2rooms': 'Двухкомнатная квартира',
+  '2-room': 'Двухкомнатная квартира',
+  '3rooms': 'Трёхкомнатная квартира',
+  '3-room': 'Трёхкомнатная квартира',
+  '4plus': 'Четырёхкомнатная квартира или больше',
+  any: 'Пока не знаю, нужна консультация',
+  choosing: 'Пока не знаю, нужна консультация',
 };
 
 const BUDGET_LABELS = {
@@ -18,7 +18,7 @@ const BUDGET_LABELS = {
   '6-8': '6–8 млн',
   '8-10': '8–10 млн',
   '10-plus': 'от 10 млн',
-  '5_to_7':  '5–7 млн',
+  '5_to_7': '5–7 млн',
   '7_to_10': '7–10 млн',
   '10_plus': 'от 10 млн',
 };
@@ -26,6 +26,7 @@ const BUDGET_LABELS = {
 const SOURCE_ALIASES = {
   svoydom_lugansk: 'svoydom_lugansk',
   floorplan_quiz_popup: 'svoydom_lugansk',
+  unlock_layouts: 'svoydom_lugansk',
   main: 'svoydom_lugansk',
   noviyadres: 'noviyadres',
   landing_2: 'noviyadres',
@@ -34,10 +35,19 @@ const SOURCE_ALIASES = {
 };
 
 const DOWN_PAYMENT_LABELS = {
-  only_own:        'Только собственные средства',
-  only_maternal:   'Материнский капитал',
-  maternal_plus_own: 'Маткапитал + свои средства',
-  need_advice:     'Нужна консультация',
+  only_own: 'Только свои средства',
+  only_maternal: 'Материнский капитал',
+  maternal_plus_own: 'Материнский капитал и свои средства',
+  no_down_payment: 'Хочу узнать, можно ли без первоначального взноса',
+  need_advice: 'Пока не знаю',
+};
+
+const MONTHLY_PAYMENT_LABELS = {
+  up_to_20: 'До 20 000 ₽',
+  '20_to_30': '20 000–30 000 ₽',
+  '30_to_40': '30 000–40 000 ₽',
+  over_40: 'Больше 40 000 ₽',
+  payment_consultation: 'Пока не знаю, нужна консультация',
 };
 
 function mapped(value, map) {
@@ -48,11 +58,15 @@ function mapped(value, map) {
 function buildMessage(answers) {
   if (!answers || typeof answers !== 'object') return '';
   const parts = [];
-  if (answers.propertyType)    parts.push(`Тип: ${answers.propertyType}`);
-  if (answers.apartmentType)   parts.push(`Планировка: ${mapped(answers.apartmentType, APARTMENT_TYPE_LABELS)}`);
-  if (answers.budgetPreset)    parts.push(`Бюджет: ${mapped(answers.budgetPreset, BUDGET_LABELS)}`);
+  if (answers.propertyType) parts.push(`Тип: ${answers.propertyType}`);
+  if (answers.apartmentType) parts.push(`Планировка: ${mapped(answers.apartmentType, APARTMENT_TYPE_LABELS)}`);
+  if (answers.budgetPreset) parts.push(`Бюджет: ${mapped(answers.budgetPreset, BUDGET_LABELS)}`);
   if (answers.downPaymentType) parts.push(`Взнос: ${mapped(answers.downPaymentType, DOWN_PAYMENT_LABELS)}`);
-  if (answers.telegram)        parts.push(`Telegram: ${answers.telegram}`);
+  if (answers.monthlyPayment) parts.push(`Платёж: ${mapped(answers.monthlyPayment, MONTHLY_PAYMENT_LABELS)}`);
+  if (Array.isArray(answers.matchedPlans) && answers.matchedPlans.length) {
+    parts.push(`Планировки: ${answers.matchedPlans.slice(0, 4).map((plan) => plan.title || plan.caption || plan.id).filter(Boolean).join('; ')}`);
+  }
+  if (answers.telegram) parts.push(`Telegram: ${answers.telegram}`);
   return parts.join(', ');
 }
 
@@ -71,8 +85,8 @@ export async function addLead(payload) {
   await ensureSchema();
   const sql = getSql();
   const answers = payload?.answers && typeof payload.answers === 'object' ? payload.answers : {};
-  const name    = payload?.name  || answers?.name  || '';
-  const phone   = payload?.phone || answers?.phone || '';
+  const name = payload?.name || answers?.name || '';
+  const phone = payload?.phone || answers?.phone || '';
   const message = buildMessage(answers);
   const source = normalizeLeadSource(payload);
 

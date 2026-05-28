@@ -6,28 +6,63 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
+import brand from '@/data/brand';
 import {
-  budgetChoices,
   getBudgetChoice,
   getFloorPlanMatches,
   getRoomChoice,
-  roomChoices,
 } from '@/data/floorplans';
 
 const OPEN_EVENT = 'open-floorplan-quiz';
-const LANDING_SOURCE = 'svoydom_lugansk';
-const FORM_SECTION = 'floorplan_quiz_popup';
+const LANDING_SOURCE = 'unlock_layouts';
+const FORM_SECTION = 'floorplan_quiz_unlock';
+const UNLOCK_STORAGE_KEY = 'svoydom_layouts_unlocked';
+const UNLOCK_EVENT = 'svoydom:layouts-unlocked';
 
 const stepMeta = {
-  budget: { index: 1, label: 'Бюджет', progress: 33 },
-  rooms: { index: 2, label: 'Комнатность', progress: 66 },
-  results: { index: 3, label: 'Подборка', progress: 100 },
+  apartment: { index: 1, label: 'Квартира', progress: 25 },
+  downPayment: { index: 2, label: 'Первоначальный взнос', progress: 50 },
+  payment: { index: 3, label: 'Платёж', progress: 75 },
+  results: { index: 4, label: 'Подборка', progress: 100 },
 };
 
 const sidebarSteps = [
-  { key: 'budget', label: 'Бюджет' },
-  { key: 'rooms', label: 'Комнатность' },
-  { key: 'results', label: 'Планировки' },
+  { key: 'apartment', label: 'Квартира' },
+  { key: 'downPayment', label: 'Взнос' },
+  { key: 'payment', label: 'Платёж' },
+  { key: 'results', label: 'Подборка' },
+];
+
+const apartmentOptions = [
+  { value: 'studio', rooms: 'studio', label: 'Студия', hint: 'компактный формат с низким входом' },
+  { value: '1room', rooms: '1-room', label: 'Однокомнатная квартира', hint: 'для жизни или первой покупки' },
+  { value: '2rooms', rooms: '2-room', label: 'Двухкомнатная квартира', hint: 'больше пространства для семьи' },
+  { value: '3rooms', rooms: '3-room', label: 'Трёхкомнатная квартира', hint: 'просторный семейный формат' },
+  { value: 'choosing', rooms: 'any', label: 'Пока не знаю, нужна консультация', hint: 'покажем разные варианты' },
+];
+
+const downPaymentOptions = [
+  { value: 'only_maternal', label: 'Материнский капитал', hint: 'проверим подходящие сценарии' },
+  { value: 'maternal_plus_own', label: 'Материнский капитал и свои средства', hint: 'учтём оба источника взноса' },
+  { value: 'only_own', label: 'Только свои средства', hint: 'подберём под ваш вход' },
+  { value: 'no_down_payment', label: 'Хочу узнать, можно ли без первоначального взноса', hint: 'разберём доступные варианты' },
+  { value: 'need_advice', label: 'Пока не знаю', hint: 'специалист подскажет' },
+];
+
+const monthlyPaymentOptions = [
+  { value: 'up_to_20', budget: 'to-6', label: 'До 20 000 ₽', hint: 'начнём с самых доступных планировок' },
+  { value: '20_to_30', budget: '6-8', label: '20 000–30 000 ₽', hint: 'сравним варианты среднего бюджета' },
+  { value: '30_to_40', budget: '8-10', label: '30 000–40 000 ₽', hint: 'покажем больше площадей и форматов' },
+  { value: 'over_40', budget: '10-plus', label: 'Больше 40 000 ₽', hint: 'откроем расширенную подборку' },
+  { value: 'payment_consultation', budget: null, label: 'Пока не знаю, нужна консультация', hint: 'подберём без жёсткого лимита' },
+];
+
+const trustItems = [
+  'Бесплатная консультация',
+  'Подбор под ваш бюджет',
+  'Помощь с ипотекой под 2%',
+  'Работаем с новостройками Луганска',
+  'Без комиссии для клиента',
 ];
 
 const emptyLead = {
@@ -36,8 +71,17 @@ const emptyLead = {
   company: '',
 };
 
+function needsOwnFundsAmount(value) {
+  return ['maternal_plus_own', 'only_own'].includes(value);
+}
+
+function formatNumber(val) {
+  const digits = String(val).replace(/\D/g, '');
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
 function getPlanWord(count) {
-  if (count === 1) return 'планировку';
+  if (count === 1) return 'планировка';
   if (count > 1 && count < 5) return 'планировки';
   return 'планировок';
 }
@@ -49,67 +93,87 @@ function formatArea(area) {
   }).format(area);
 }
 
+function humanizeApartmentText(value) {
+  return String(value || '')
+    .replaceAll('1-комнатная', 'однокомнатная квартира')
+    .replaceAll('2-комнатная', 'двухкомнатная квартира')
+    .replaceAll('3-комнатная', 'трёхкомнатная квартира');
+}
+
+function capitalizeFirst(value) {
+  const text = String(value || '');
+  return text ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+}
+
 function getResultIntro(hasExactMatches) {
   return hasExactMatches
     ? 'Показываем найденные варианты по вашим параметрам.'
-    : 'Точных вариантов в бюджете пока нет, поэтому показываем ближайшие найденные планировки.';
+    : 'Точных вариантов пока нет, поэтому показываем ближайшие найденные планировки.';
 }
 
 function serializePlan(plan) {
   return {
     id: plan.id,
     complex: plan.complex,
-    title: plan.title,
-    rooms: plan.roomLabel,
+    title: capitalizeFirst(humanizeApartmentText(plan.title)),
+    rooms: humanizeApartmentText(plan.roomLabel),
     area: plan.area,
     price: plan.priceLabel,
-    caption: plan.caption,
+    caption: capitalizeFirst(humanizeApartmentText(plan.caption)),
     source: `${plan.sourceName}, проверено ${plan.sourceChecked}`,
   };
 }
 
 export default function LeadFormSection() {
   const [open, setOpen] = useState(true);
-  const [step, setStep] = useState('budget');
-  const [budget, setBudget] = useState(null);
-  const [rooms, setRooms] = useState(null);
+  const [step, setStep] = useState('apartment');
+  const [apartment, setApartment] = useState(null);
+  const [downPayment, setDownPayment] = useState(null);
+  const [ownFundsAmount, setOwnFundsAmount] = useState(null);
+  const [monthlyPayment, setMonthlyPayment] = useState(null);
   const [lead, setLead] = useState(emptyLead);
   const [done, setDone] = useState(false);
+  const [unlocked, setUnlocked] = useState(false);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const modalRef = useRef(null);
   const contentRef = useRef(null);
-  const formRef = useRef(null);
-  const nameInputRef = useRef(null);
   const lockedScrollYRef = useRef(0);
   const bodyStyleRef = useRef({});
 
-  const selectedBudget = budget ? getBudgetChoice(budget) : null;
-  const selectedRooms = rooms ? getRoomChoice(rooms) : null;
+  const selectedApartment = apartmentOptions.find((choice) => choice.value === apartment) || null;
+  const selectedDownPayment = downPaymentOptions.find((choice) => choice.value === downPayment) || null;
+  const selectedPayment = monthlyPaymentOptions.find((choice) => choice.value === monthlyPayment) || null;
+  const derivedRooms = selectedApartment?.rooms || null;
+  const derivedBudget = selectedPayment?.budget || null;
+  const selectedBudget = derivedBudget ? getBudgetChoice(derivedBudget) : null;
+  const selectedRooms = derivedRooms ? getRoomChoice(derivedRooms) : null;
   const currentMeta = stepMeta[step];
 
   const matchedPlans = useMemo(() => {
-    if (!budget || !rooms) return [];
-    return getFloorPlanMatches(budget, rooms);
-  }, [budget, rooms]);
+    if (!apartment || !downPayment || !monthlyPayment) return [];
+    return getFloorPlanMatches(derivedBudget, derivedRooms || 'any');
+  }, [apartment, derivedBudget, derivedRooms, downPayment, monthlyPayment]);
+
+  const visiblePlans = unlocked ? matchedPlans : matchedPlans.slice(0, 4);
 
   const hasExactBudgetMatches = useMemo(() => {
-    if (!budget || !rooms) return true;
+    if (!derivedBudget || !derivedRooms) return true;
 
     const maxPrice = selectedBudget?.maxPriceRub ?? null;
     return matchedPlans.some((plan) => {
       const priceFits = maxPrice === null || plan.priceRub <= maxPrice;
-      const roomsFit = rooms === 'any' || plan.rooms === rooms;
+      const roomsFit = derivedRooms === 'any' || plan.rooms === derivedRooms;
       return priceFits && roomsFit;
     });
-  }, [budget, matchedPlans, rooms, selectedBudget?.maxPriceRub]);
+  }, [derivedBudget, derivedRooms, matchedPlans, selectedBudget?.maxPriceRub]);
 
   useEffect(() => {
     const openQuiz = () => {
       setOpen(true);
       setDone(false);
       setError('');
-      setStep(budget && rooms ? 'results' : 'budget');
+      setStep(apartment && downPayment && monthlyPayment ? 'results' : 'apartment');
     };
 
     const captureCtaClick = (event) => {
@@ -141,7 +205,22 @@ export default function LeadFormSection() {
       window.removeEventListener(OPEN_EVENT, openQuiz);
       document.removeEventListener('click', captureCtaClick);
     };
-  }, [budget, rooms]);
+  }, [apartment, downPayment, monthlyPayment]);
+
+  useEffect(() => {
+    const syncUnlockState = () => {
+      setUnlocked(window.localStorage.getItem(UNLOCK_STORAGE_KEY) === 'true');
+    };
+
+    syncUnlockState();
+    window.addEventListener('storage', syncUnlockState);
+    window.addEventListener(UNLOCK_EVENT, syncUnlockState);
+
+    return () => {
+      window.removeEventListener('storage', syncUnlockState);
+      window.removeEventListener(UNLOCK_EVENT, syncUnlockState);
+    };
+  }, []);
 
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0 });
@@ -181,22 +260,17 @@ export default function LeadFormSection() {
     };
   }, [open]);
 
-  const scrollToContactForm = () => {
-    if (modalRef.current && formRef.current) {
-      const modalRect = modalRef.current.getBoundingClientRect();
-      const formRect = formRef.current.getBoundingClientRect();
-      const targetTop = formRect.top - modalRect.top + modalRef.current.scrollTop - 16;
-      modalRef.current.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-    }
-
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    window.setTimeout(() => nameInputRef.current?.focus({ preventScroll: true }), 420);
+  const unlockSelection = () => {
+    window.localStorage.setItem(UNLOCK_STORAGE_KEY, 'true');
+    window.dispatchEvent(new Event(UNLOCK_EVENT));
+    setUnlocked(true);
   };
 
   const canOpenSidebarStep = (targetStep) => {
-    if (targetStep === 'budget') return true;
-    if (targetStep === 'rooms') return Boolean(budget);
-    if (targetStep === 'results') return Boolean(budget && rooms);
+    if (targetStep === 'apartment') return true;
+    if (targetStep === 'downPayment') return Boolean(apartment);
+    if (targetStep === 'payment') return Boolean(apartment && downPayment && (!needsOwnFundsAmount(downPayment) || ownFundsAmount));
+    if (targetStep === 'results') return Boolean(apartment && downPayment && monthlyPayment && (!needsOwnFundsAmount(downPayment) || ownFundsAmount));
     return false;
   };
 
@@ -207,31 +281,52 @@ export default function LeadFormSection() {
     setStep(targetStep);
   };
 
-  const selectBudget = (value) => {
-    setBudget(value);
+  const selectApartment = (value) => {
+    setApartment(value);
     setError('');
-    setStep('rooms');
+    setDone(false);
+    setStep('downPayment');
   };
 
-  const selectRooms = (value) => {
-    setRooms(value);
+  const selectDownPayment = (value) => {
+    setDownPayment(value);
     setError('');
+    setDone(false);
+    if (!needsOwnFundsAmount(value)) {
+      setOwnFundsAmount(null);
+      setStep('payment');
+    }
+  };
+
+  const continueAfterDownPayment = () => {
+    if (!downPayment) return;
+    if (needsOwnFundsAmount(downPayment) && !ownFundsAmount) return;
+    setStep('payment');
+  };
+
+  const selectMonthlyPayment = (value) => {
+    setMonthlyPayment(value);
+    setError('');
+    setDone(false);
     setStep('results');
   };
 
   const goBack = () => {
     setError('');
-    if (step === 'results') setStep('rooms');
-    if (step === 'rooms') setStep('budget');
+    if (step === 'results') setStep('payment');
+    if (step === 'payment') setStep('downPayment');
+    if (step === 'downPayment') setStep('apartment');
   };
 
   const restart = () => {
-    setBudget(null);
-    setRooms(null);
+    setApartment(null);
+    setDownPayment(null);
+    setOwnFundsAmount(null);
+    setMonthlyPayment(null);
     setLead(emptyLead);
     setDone(false);
     setError('');
-    setStep('budget');
+    setStep('apartment');
     setOpen(true);
   };
 
@@ -267,12 +362,17 @@ export default function LeadFormSection() {
           createdAt: new Date().toISOString(),
           company: lead.company,
           answers: {
-            quiz: 'floorplan_quiz_popup',
+            quiz: 'floorplan_quiz_unlock',
             formSection: FORM_SECTION,
+            apartmentType: selectedApartment?.value || '',
+            rooms: selectedApartment?.label || '',
+            downPaymentType: selectedDownPayment?.value || '',
+            downPayment: selectedDownPayment?.label || '',
+            ownFundsAmount,
+            monthlyPayment: selectedPayment?.value || '',
+            monthlyPaymentLabel: selectedPayment?.label || '',
             budgetPreset: selectedBudget?.value || '',
             budget: selectedBudget?.label || '',
-            apartmentType: selectedRooms?.value || '',
-            rooms: selectedRooms?.label || '',
             matchedPlans: matchedPlans.map(serializePlan),
           },
           utm: {
@@ -300,6 +400,7 @@ export default function LeadFormSection() {
         window.ym(107023721, 'reachGoal', 'lead_submit');
       }
 
+      unlockSelection();
       setDone(true);
     } catch (submitError) {
       setError(
@@ -312,6 +413,56 @@ export default function LeadFormSection() {
     }
   };
 
+  const openPlan = (plan) => {
+    if (!unlocked || !plan?.sourceUrl) return;
+    window.open(plan.sourceUrl, '_blank', 'noopener,noreferrer');
+  };
+
+  const renderPlanCard = (plan) => (
+    <button
+      key={plan.id}
+      type="button"
+      onClick={() => openPlan(plan)}
+      data-complex={plan.complex}
+      className="focus-ring group min-w-0 overflow-hidden rounded-[22px] border border-[#eadfcd] bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--accent2)] hover:shadow-[0_16px_36px_rgba(31,41,55,0.12)]"
+      aria-label={`Открыть планировку ${plan.complex}, ${plan.title}`}
+    >
+      <div className="relative aspect-[4/3] bg-[#fffdf8]">
+        <Image
+          src={plan.image}
+          alt={`${plan.complex}: ${capitalizeFirst(humanizeApartmentText(plan.title))}`}
+          fill
+          sizes="(min-width: 1280px) 230px, (min-width: 640px) 45vw, 90vw"
+          className="object-contain p-2"
+        />
+      </div>
+      <div className="space-y-3 p-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="rounded-full bg-[#f2eadf] px-2.5 py-1 text-[11px] font-bold text-[#6e5535]">
+            ЖК {plan.complex}
+          </span>
+          <span className="text-xs font-bold text-[color:var(--accent2)]">
+            {plan.priceLabel}
+          </span>
+        </div>
+        <div>
+          <h3 className="break-words text-sm font-bold leading-snug">
+            {capitalizeFirst(humanizeApartmentText(plan.caption))}
+          </h3>
+          <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
+            {humanizeApartmentText(plan.roomLabel)} · {formatArea(plan.area)} м²
+          </p>
+        </div>
+        <p className="rounded-xl bg-[#fbf7ef] px-3 py-2 text-[11px] font-semibold leading-snug text-[color:var(--muted)]">
+          Источник: {plan.sourceName}, проверено {plan.sourceChecked}
+        </p>
+        <p className="text-xs font-bold text-[color:var(--accent2)] transition group-hover:translate-x-0.5">
+          {unlocked ? 'Смотреть планировку →' : 'Доступ после заявки →'}
+        </p>
+      </div>
+    </button>
+  );
+
   return (
     <>
       <section id="lead-form" className="py-12 md:py-16">
@@ -323,10 +474,10 @@ export default function LeadFormSection() {
                   Быстрый подбор
                 </p>
                 <h2 className="max-w-3xl text-2xl font-bold leading-tight tracking-tight text-[#111827] md:text-3xl">
-                  Подберём планировки под ваш бюджет за 2 вопроса
+                  Подберём планировки под ваши ответы
                 </h2>
                 <p className="mt-3 max-w-2xl text-[color:var(--muted)]">
-                  Покажем реальные квартирные планировки из открытых источников, а менеджер уточнит наличие и свободные квартиры.
+                  Ответьте на 3 вопроса — покажем персональную подборку квартир с планировками и ценами.
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
@@ -359,17 +510,17 @@ export default function LeadFormSection() {
                   </div>
                   <div className="mt-5">
                     <p className="font-semibold text-[#d7c4a5]">
-                      2 вопроса и реальные планировки
+                      3 вопроса и реальные планировки
                     </p>
                     <h3
                       id="floorplan-quiz-title"
                       className="mt-2 max-w-md text-[1.55rem] font-bold leading-tight tracking-tight text-white sm:text-3xl"
                     >
-                      Квартиры в новостройках Луганска под ваш бюджет
+                      Квартиры в новостройках Луганска под ваш сценарий
                     </h3>
                   </div>
 
-                  <div className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                  <div className="mt-5 grid gap-2 sm:grid-cols-4 lg:grid-cols-1">
                     {sidebarSteps.map((item, index) => {
                       const itemMeta = stepMeta[item.key];
                       const completedOrCurrent = itemMeta.index <= currentMeta.index;
@@ -413,7 +564,7 @@ export default function LeadFormSection() {
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--muted)]">
                     <span>
-                      Шаг {currentMeta.index} из 3 · {currentMeta.label}
+                      Шаг {currentMeta.index} из 4 · {currentMeta.label}
                     </span>
                     <span>{currentMeta.progress}%</span>
                   </div>
@@ -425,210 +576,239 @@ export default function LeadFormSection() {
                   </div>
                 </div>
 
-                {done ? (
-                  <div className="min-w-0 py-4">
-                    <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
-                      Заявка принята
-                    </p>
-                    <h2 className="mt-2 text-[1.6rem] font-bold leading-tight tracking-tight sm:text-3xl">
-                      Подборка ушла менеджеру
-                    </h2>
-                    <p className="mt-3 text-sm leading-relaxed text-[color:var(--muted)]">
-                      Свяжемся с вами, уточним актуальное наличие и покажем свободные квартиры по выбранным параметрам.
-                    </p>
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      <Button type="button" onClick={() => setOpen(false)}>
-                        Закрыть
-                      </Button>
-                      <Button type="button" variant="ghost" onClick={restart}>
-                        Начать заново
-                      </Button>
+                {step === 'apartment' && (
+                  <QuizQuestion
+                    title="Какая квартира вас интересует?"
+                    description="Выберите формат, а мы используем его для текущего подбора планировок."
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {apartmentOptions.map((choice) => (
+                        <ChoiceButton
+                          key={choice.value}
+                          active={apartment === choice.value}
+                          title={choice.label}
+                          text={choice.hint}
+                          onClick={() => selectApartment(choice.value)}
+                        />
+                      ))}
                     </div>
-                  </div>
-                ) : (
-                  <>
-                    {step === 'budget' && (
-                      <QuizQuestion
-                        title="На какой бюджет ориентируетесь?"
-                        description="Выберите верхнюю границу. Сначала фильтруем по цене, затем по комнатности."
-                      >
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {budgetChoices.map((choice) => (
-                            <ChoiceButton
-                              key={choice.value}
-                              active={budget === choice.value}
-                              title={choice.label}
-                              text={choice.value === 'to-6' ? 'покажем самые доступные варианты' : 'подберём планировки в диапазоне'}
-                              onClick={() => selectBudget(choice.value)}
-                            />
-                          ))}
-                        </div>
-                      </QuizQuestion>
-                    )}
+                  </QuizQuestion>
+                )}
 
-                    {step === 'rooms' && (
-                      <QuizQuestion
-                        title="Сколько комнат рассматриваете?"
-                        description="Планировки не кликабельны: это витрина найденных вариантов, дальше наличие уточнит менеджер."
-                      >
-                        <div className="grid gap-3 sm:grid-cols-2">
-                          {roomChoices.map((choice) => (
-                            <ChoiceButton
-                              key={choice.value}
-                              active={rooms === choice.value}
-                              title={choice.label}
-                              text={choice.value === 'any' ? 'покажем всё, что подходит по бюджету' : 'сравним найденные планировки'}
-                              onClick={() => selectRooms(choice.value)}
-                            />
-                          ))}
-                        </div>
-                      </QuizQuestion>
-                    )}
-
-                    {step === 'results' && (
-                      <div className="min-w-0">
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
-                              Результат
-                            </p>
-                            <h2 className="mt-2 max-w-full break-words text-[1.55rem] font-bold leading-tight tracking-tight sm:text-3xl">
-                              Подобрали {matchedPlans.length} {getPlanWord(matchedPlans.length)} под ваш запрос
-                            </h2>
-                            <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
-                              {selectedBudget?.label} · {selectedRooms?.label}. {getResultIntro(hasExactBudgetMatches)}
-                            </p>
-                          </div>
-                          <Button type="button" variant="ghost" className="w-fit rounded-full !px-4 !py-2" onClick={goBack}>
-                            ← Назад
-                          </Button>
-                        </div>
-
-                        <p className="mt-4 rounded-2xl border border-[#eadfcd] bg-white/70 px-4 py-3 text-sm font-medium leading-relaxed text-[color:var(--muted)]">
-                          Нажмите на любую планировку, и мы сразу переведём вас к форме связи для уточнения цены, этажа и свободных квартир.
-                        </p>
-
-                        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                          {matchedPlans.map((plan) => (
-                            <button
-                              key={plan.id}
-                              type="button"
-                              onClick={scrollToContactForm}
-                              data-complex={plan.complex}
-                              className="focus-ring group min-w-0 overflow-hidden rounded-[22px] border border-[#eadfcd] bg-white text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--accent2)] hover:shadow-[0_16px_36px_rgba(31,41,55,0.12)]"
-                              aria-label={`Оставить контакт по планировке ${plan.complex}, ${plan.title}`}
-                            >
-                              <div className="relative aspect-[4/3] bg-[#fffdf8]">
-                                <Image
-                                  src={plan.image}
-                                  alt={`${plan.complex}: ${plan.title}`}
-                                  fill
-                                  sizes="(min-width: 1280px) 230px, (min-width: 640px) 45vw, 90vw"
-                                  className="object-contain p-2"
-                                />
-                              </div>
-                              <div className="space-y-3 p-3">
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="rounded-full bg-[#f2eadf] px-2.5 py-1 text-[11px] font-bold text-[#6e5535]">
-                                    ЖК {plan.complex}
-                                  </span>
-                                  <span className="text-xs font-bold text-[color:var(--accent2)]">
-                                    {plan.priceLabel}
-                                  </span>
-                                </div>
-                                <div>
-                                  <h3 className="break-words text-sm font-bold leading-snug">
-                                    {plan.caption}
-                                  </h3>
-                                  <p className="mt-1 text-xs font-semibold text-[color:var(--muted)]">
-                                    {plan.roomLabel} · {formatArea(plan.area)} м²
-                                  </p>
-                                </div>
-                                <p className="rounded-xl bg-[#fbf7ef] px-3 py-2 text-[11px] font-semibold leading-snug text-[color:var(--muted)]">
-                                  Источник: {plan.sourceName}, проверено {plan.sourceChecked}
-                                </p>
-                                <p className="text-xs font-bold text-[color:var(--accent2)] transition group-hover:translate-x-0.5">
-                                  Уточнить наличие →
-                                </p>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-
-                        <form
-                          ref={formRef}
-                          onSubmit={handleSubmit}
-                          className="mt-5 grid gap-3 rounded-[24px] border border-[#eadfcd] bg-white p-4 sm:grid-cols-[1fr_1fr_auto]"
-                        >
-                          <div className="min-w-0">
-                            <label className="text-sm font-medium" htmlFor="floorplan-quiz-name">
-                              Имя
-                            </label>
-                            <input
-                              ref={nameInputRef}
-                              id="floorplan-quiz-name"
-                              value={lead.name}
-                              onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))}
-                              placeholder="Например, Анна"
-                              className="focus-ring mt-1.5 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
-                              autoComplete="name"
-                            />
-                          </div>
-                          <div className="min-w-0">
-                            <label className="text-sm font-medium" htmlFor="floorplan-quiz-phone">
-                              Телефон
-                            </label>
-                            <input
-                              id="floorplan-quiz-phone"
-                              type="tel"
-                              value={lead.phone}
-                              onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))}
-                              placeholder="+7 999 123 45 67"
-                              className="focus-ring mt-1.5 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
-                              autoComplete="tel"
-                            />
-                          </div>
-                          <div className="flex items-end">
-                            <Button
-                              type="submit"
-                              disabled={isSubmitting}
-                              className="min-h-12 h-auto w-full px-5 py-3 text-center leading-tight sm:w-auto"
-                            >
-                              {isSubmitting ? 'Отправляем...' : 'Получить консультацию'}
-                            </Button>
-                          </div>
-                          <input
-                            tabIndex={-1}
-                            autoComplete="off"
-                            aria-hidden="true"
-                            className="hidden"
-                            name="company"
-                            value={lead.company}
-                            onChange={(event) => setLead((prev) => ({ ...prev, company: event.target.value }))}
-                          />
-                          <div className="sm:col-span-3">
-                            {error && <p className="text-xs font-semibold text-red-600">{error}</p>}
-                            <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
-                              Нажимая кнопку, вы соглашаетесь с{' '}
-                              <Link
-                                href="/privacy-policy"
-                                className="font-semibold text-[color:var(--accent2)] underline-offset-4 hover:underline"
-                              >
-                                политикой конфиденциальности
-                              </Link>
-                              . Цены являются ориентиром по открытым источникам и уточняются перед бронью.
-                            </p>
-                          </div>
-                        </form>
+                {step === 'downPayment' && (
+                  <QuizQuestion
+                    title="Что планируете использовать для первоначального взноса?"
+                    description="Это поможет специалисту сразу проверить подходящий ипотечный сценарий."
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {downPaymentOptions.map((choice) => (
+                        <ChoiceButton
+                          key={choice.value}
+                          active={downPayment === choice.value}
+                          title={choice.label}
+                          text={choice.hint}
+                          onClick={() => selectDownPayment(choice.value)}
+                        />
+                      ))}
+                    </div>
+                    {needsOwnFundsAmount(downPayment) && (
+                      <div className="mt-4 rounded-[22px] border border-[#eadfcd] bg-white/70 p-4">
+                        <label className="text-sm font-semibold" htmlFor="own-funds-amount">
+                          Какая сумма своих средств есть на первоначальный взнос?
+                        </label>
+                        <input
+                          id="own-funds-amount"
+                          className="focus-ring mt-2 h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
+                          placeholder="Например, 800 000 ₽"
+                          inputMode="numeric"
+                          value={ownFundsAmount != null ? formatNumber(ownFundsAmount) + ' ₽' : ''}
+                          onChange={(event) => {
+                            const digits = event.target.value.replace(/\D/g, '');
+                            setOwnFundsAmount(digits || null);
+                          }}
+                        />
                       </div>
                     )}
-
-                    {step !== 'budget' && step !== 'results' && (
-                      <Button type="button" variant="ghost" className="mt-5 rounded-full !px-4 !py-2" onClick={goBack}>
-                        ← Назад
+                    {downPayment && (
+                      <Button
+                        type="button"
+                        className="mt-5 rounded-full !px-5 !py-3"
+                        disabled={needsOwnFundsAmount(downPayment) && !ownFundsAmount}
+                        onClick={continueAfterDownPayment}
+                      >
+                        Далее
                       </Button>
                     )}
-                  </>
+                  </QuizQuestion>
+                )}
+
+                {step === 'payment' && (
+                  <QuizQuestion
+                    title="Какой ежемесячный платёж был бы комфортным?"
+                    description="По ответу определим ценовой диапазон и покажем подходящие планировки."
+                  >
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {monthlyPaymentOptions.map((choice) => (
+                        <ChoiceButton
+                          key={choice.value}
+                          active={monthlyPayment === choice.value}
+                          title={choice.label}
+                          text={choice.hint}
+                          onClick={() => selectMonthlyPayment(choice.value)}
+                        />
+                      ))}
+                    </div>
+                  </QuizQuestion>
+                )}
+
+                {step === 'results' && (
+                  <div className="min-w-0">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--accent)]">
+                          Персональная подборка
+                        </p>
+                        <h2 className="mt-2 max-w-full break-words text-[1.55rem] font-bold leading-tight tracking-tight sm:text-3xl">
+                          Подобрали {matchedPlans.length} {getPlanWord(matchedPlans.length)} под ваши ответы
+                        </h2>
+                        <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+                          {selectedApartment?.label}
+                          {selectedPayment ? ` · ${selectedPayment.label}` : ''}
+                          {selectedBudget ? ` · ориентир ${selectedBudget.label}` : ''}. {getResultIntro(hasExactBudgetMatches)}
+                        </p>
+                      </div>
+                      <Button type="button" variant="ghost" className="w-fit rounded-full !px-4 !py-2" onClick={goBack}>
+                        ← Назад
+                      </Button>
+                    </div>
+
+                    {matchedPlans.length === 0 ? (
+                      <div className="mt-5 rounded-[24px] border border-[#eadfcd] bg-white p-5">
+                        <h3 className="text-xl font-bold">Пока нет подходящих вариантов</h3>
+                        <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+                          По этим ответам лучше уточнить задачу вручную. Специалист подскажет, какие варианты доступны.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {!unlocked && (
+                          <p className="mt-4 rounded-2xl border border-[#eadfcd] bg-white/70 px-4 py-3 text-sm font-medium leading-relaxed text-[color:var(--muted)]">
+                            Первые карточки уже видны. Оставьте контакт — откроем планировки и условия на этой странице.
+                          </p>
+                        )}
+
+                        {unlocked && (
+                          <div className="mt-4 rounded-[24px] border border-[rgba(123,165,154,0.32)] bg-[rgba(123,165,154,0.12)] p-5">
+                            <p className="text-sm font-bold uppercase tracking-[0.16em] text-[color:var(--accent2)]">
+                              Подборка открыта
+                            </p>
+                            <h3 className="mt-2 text-xl font-bold">Специалист скоро свяжется с вами</h3>
+                            <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+                              Специалист скоро свяжется с вами и поможет подобрать лучший вариант.
+                            </p>
+                            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                              <Button as="a" href={brand.telegramUrl} target="_blank" rel="noreferrer" variant="ghost">
+                                Написать в Telegram
+                              </Button>
+                              <Button type="button" onClick={() => setOpen(false)}>
+                                Продолжить просмотр
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="relative mt-5">
+                          <div className={`grid gap-3 sm:grid-cols-2 ${unlocked ? '' : 'pointer-events-none select-none blur-[2.5px]'}`}>
+                            {visiblePlans.map(renderPlanCard)}
+                          </div>
+
+                          {!unlocked && (
+                            <div className="absolute inset-x-0 top-0 z-10 flex justify-center p-2 sm:p-5">
+                              <form
+                                onSubmit={handleSubmit}
+                                className="w-full max-w-xl rounded-[24px] border border-white/70 bg-white/80 p-5 shadow-[0_24px_70px_rgba(31,41,55,0.20)] backdrop-blur-xl sm:p-6"
+                              >
+                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent)]">
+                                  Доступ к подборке
+                                </p>
+                                <h3 className="mt-3 text-[1.45rem] font-bold leading-tight tracking-tight sm:text-2xl">
+                                  Откройте подборку с планировками и ценами
+                                </h3>
+                                <p className="mt-3 text-sm leading-relaxed text-[color:var(--muted)]">
+                                  Мы уже подобрали варианты квартир под ваши ответы. Оставьте контакт — откроем планировки и отправим условия ипотеки под 2%.
+                                </p>
+                                <p className="mt-3 text-sm leading-relaxed text-[rgba(31,41,55,0.60)]">
+                                  Без спама и навязчивых звонков. Сначала уточним задачу и покажем подходящие варианты.
+                                </p>
+
+                                <div className="mt-5 grid gap-3">
+                                  <input
+                                    value={lead.name}
+                                    onChange={(event) => setLead((prev) => ({ ...prev, name: event.target.value }))}
+                                    placeholder="Имя"
+                                    className="focus-ring h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
+                                    autoComplete="name"
+                                  />
+                                  <input
+                                    type="tel"
+                                    value={lead.phone}
+                                    onChange={(event) => setLead((prev) => ({ ...prev, phone: event.target.value }))}
+                                    placeholder="Телефон"
+                                    className="focus-ring h-12 w-full rounded-2xl border border-[color:var(--border)] bg-[#fffdf8] px-4 text-base"
+                                    autoComplete="tel"
+                                  />
+                                  <Button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="min-h-12 w-full px-5 py-3 text-center leading-tight"
+                                  >
+                                    {isSubmitting ? 'Открываем подборку...' : 'Открыть подборку'}
+                                  </Button>
+                                </div>
+
+                                <input
+                                  tabIndex={-1}
+                                  autoComplete="off"
+                                  aria-hidden="true"
+                                  className="hidden"
+                                  name="company"
+                                  value={lead.company}
+                                  onChange={(event) => setLead((prev) => ({ ...prev, company: event.target.value }))}
+                                />
+
+                                <p className="mt-3 text-xs leading-relaxed text-[color:var(--muted)]">
+                                  После отправки формы подборка откроется на этой странице. Нажимая кнопку, вы соглашаетесь с{' '}
+                                  <Link
+                                    href="/privacy-policy"
+                                    className="font-semibold text-[color:var(--accent2)] underline-offset-4 hover:underline"
+                                  >
+                                    политикой конфиденциальности
+                                  </Link>
+                                  .
+                                </p>
+                                {error && <p className="mt-3 text-xs font-semibold text-red-600">{error}</p>}
+
+                                <div className="mt-5 grid gap-2 text-sm text-[#111827] sm:grid-cols-2">
+                                  {trustItems.map((item) => (
+                                    <span key={item} className="inline-flex items-center gap-2">
+                                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[color:var(--accent2)] text-[10px] font-bold text-white">✓</span>
+                                      {item}
+                                    </span>
+                                  ))}
+                                </div>
+                              </form>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {step !== 'apartment' && step !== 'results' && (
+                  <Button type="button" variant="ghost" className="mt-5 rounded-full !px-4 !py-2" onClick={goBack}>
+                    ← Назад
+                  </Button>
                 )}
               </section>
             </div>

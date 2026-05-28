@@ -144,7 +144,7 @@ export default function HomePage() {
               <div className="why-now-card reveal">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                 <h3 className="why-now-card__title">Квартир остаётся всё меньше</h3>
-                <p className="why-now-card__text">Лучшие планировки разбирают первыми. Студии и однушки заканчиваются быстрее всего.</p>
+                <p className="why-now-card__text">Лучшие планировки разбирают первыми. Студии и однокомнатные квартиры заканчиваются быстрее всего.</p>
               </div>
               <div className="why-now-card reveal">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8B6914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
