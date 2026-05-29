@@ -7,11 +7,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Container from '@/components/ui/Container';
 import brand from '@/data/brand';
-import {
-  getBudgetChoice,
-  getFloorPlanMatches,
-  getRoomChoice,
-} from '@/data/floorplans';
+import { getFloorPlanMatches } from '@/data/floorplans';
 
 const OPEN_EVENT = 'open-floorplan-quiz';
 const LANDING_SOURCE = 'unlock_layouts';
@@ -20,16 +16,14 @@ const UNLOCK_STORAGE_KEY = 'svoydom_layouts_unlocked';
 const UNLOCK_EVENT = 'svoydom:layouts-unlocked';
 
 const stepMeta = {
-  apartment: { index: 1, label: 'Квартира', progress: 25 },
-  downPayment: { index: 2, label: 'Первоначальный взнос', progress: 50 },
-  payment: { index: 3, label: 'Платёж', progress: 75 },
-  results: { index: 4, label: 'Подборка', progress: 100 },
+  apartment: { index: 1, label: 'Квартира', progress: 34 },
+  downPayment: { index: 2, label: 'Первоначальный взнос', progress: 67 },
+  results: { index: 3, label: 'Подборка', progress: 100 },
 };
 
 const sidebarSteps = [
   { key: 'apartment', label: 'Квартира' },
   { key: 'downPayment', label: 'Взнос' },
-  { key: 'payment', label: 'Платёж' },
   { key: 'results', label: 'Подборка' },
 ];
 
@@ -47,14 +41,6 @@ const downPaymentOptions = [
   { value: 'only_own', label: 'Только свои средства', hint: 'подберём под ваш вход' },
   { value: 'no_down_payment', label: 'Хочу узнать, можно ли без первоначального взноса', hint: 'разберём доступные варианты' },
   { value: 'need_advice', label: 'Пока не знаю', hint: 'специалист подскажет' },
-];
-
-const monthlyPaymentOptions = [
-  { value: 'up_to_20', budget: 'to-6', label: 'До 20 000 ₽', hint: 'начнём с самых доступных планировок' },
-  { value: '20_to_30', budget: '6-8', label: '20 000–30 000 ₽', hint: 'сравним варианты среднего бюджета' },
-  { value: '30_to_40', budget: '8-10', label: '30 000–40 000 ₽', hint: 'покажем больше площадей и форматов' },
-  { value: 'over_40', budget: '10-plus', label: 'Больше 40 000 ₽', hint: 'откроем расширенную подборку' },
-  { value: 'payment_consultation', budget: null, label: 'Пока не знаю, нужна консультация', hint: 'подберём без жёсткого лимита' },
 ];
 
 const trustItems = [
@@ -130,7 +116,6 @@ export default function LeadFormSection() {
   const [apartment, setApartment] = useState(null);
   const [downPayment, setDownPayment] = useState(null);
   const [ownFundsAmount, setOwnFundsAmount] = useState(null);
-  const [monthlyPayment, setMonthlyPayment] = useState(null);
   const [lead, setLead] = useState(emptyLead);
   const [done, setDone] = useState(false);
   const [unlocked, setUnlocked] = useState(false);
@@ -143,37 +128,28 @@ export default function LeadFormSection() {
 
   const selectedApartment = apartmentOptions.find((choice) => choice.value === apartment) || null;
   const selectedDownPayment = downPaymentOptions.find((choice) => choice.value === downPayment) || null;
-  const selectedPayment = monthlyPaymentOptions.find((choice) => choice.value === monthlyPayment) || null;
   const derivedRooms = selectedApartment?.rooms || null;
-  const derivedBudget = selectedPayment?.budget || null;
-  const selectedBudget = derivedBudget ? getBudgetChoice(derivedBudget) : null;
-  const selectedRooms = derivedRooms ? getRoomChoice(derivedRooms) : null;
   const currentMeta = stepMeta[step];
 
   const matchedPlans = useMemo(() => {
-    if (!apartment || !downPayment || !monthlyPayment) return [];
-    return getFloorPlanMatches(derivedBudget, derivedRooms || 'any');
-  }, [apartment, derivedBudget, derivedRooms, downPayment, monthlyPayment]);
+    if (!apartment || !downPayment) return [];
+    if (needsOwnFundsAmount(downPayment) && !ownFundsAmount) return [];
+    return getFloorPlanMatches(null, derivedRooms || 'any');
+  }, [apartment, derivedRooms, downPayment, ownFundsAmount]);
 
   const visiblePlans = unlocked ? matchedPlans : matchedPlans.slice(0, 4);
 
-  const hasExactBudgetMatches = useMemo(() => {
-    if (!derivedBudget || !derivedRooms) return true;
-
-    const maxPrice = selectedBudget?.maxPriceRub ?? null;
-    return matchedPlans.some((plan) => {
-      const priceFits = maxPrice === null || plan.priceRub <= maxPrice;
-      const roomsFit = derivedRooms === 'any' || plan.rooms === derivedRooms;
-      return priceFits && roomsFit;
-    });
-  }, [derivedBudget, derivedRooms, matchedPlans, selectedBudget?.maxPriceRub]);
+  const hasExactRoomMatches = useMemo(() => {
+    if (!derivedRooms || derivedRooms === 'any') return true;
+    return matchedPlans.some((plan) => plan.rooms === derivedRooms);
+  }, [derivedRooms, matchedPlans]);
 
   useEffect(() => {
     const openQuiz = () => {
       setOpen(true);
       setDone(false);
       setError('');
-      setStep(apartment && downPayment && monthlyPayment ? 'results' : 'apartment');
+      setStep(apartment && downPayment && (!needsOwnFundsAmount(downPayment) || ownFundsAmount) ? 'results' : 'apartment');
     };
 
     const captureCtaClick = (event) => {
@@ -205,7 +181,7 @@ export default function LeadFormSection() {
       window.removeEventListener(OPEN_EVENT, openQuiz);
       document.removeEventListener('click', captureCtaClick);
     };
-  }, [apartment, downPayment, monthlyPayment]);
+  }, [apartment, downPayment, ownFundsAmount]);
 
   useEffect(() => {
     const syncUnlockState = () => {
@@ -269,8 +245,7 @@ export default function LeadFormSection() {
   const canOpenSidebarStep = (targetStep) => {
     if (targetStep === 'apartment') return true;
     if (targetStep === 'downPayment') return Boolean(apartment);
-    if (targetStep === 'payment') return Boolean(apartment && downPayment && (!needsOwnFundsAmount(downPayment) || ownFundsAmount));
-    if (targetStep === 'results') return Boolean(apartment && downPayment && monthlyPayment && (!needsOwnFundsAmount(downPayment) || ownFundsAmount));
+    if (targetStep === 'results') return Boolean(apartment && downPayment && (!needsOwnFundsAmount(downPayment) || ownFundsAmount));
     return false;
   };
 
@@ -294,27 +269,19 @@ export default function LeadFormSection() {
     setDone(false);
     if (!needsOwnFundsAmount(value)) {
       setOwnFundsAmount(null);
-      setStep('payment');
+      setStep('results');
     }
   };
 
   const continueAfterDownPayment = () => {
     if (!downPayment) return;
     if (needsOwnFundsAmount(downPayment) && !ownFundsAmount) return;
-    setStep('payment');
-  };
-
-  const selectMonthlyPayment = (value) => {
-    setMonthlyPayment(value);
-    setError('');
-    setDone(false);
     setStep('results');
   };
 
   const goBack = () => {
     setError('');
-    if (step === 'results') setStep('payment');
-    if (step === 'payment') setStep('downPayment');
+    if (step === 'results') setStep('downPayment');
     if (step === 'downPayment') setStep('apartment');
   };
 
@@ -322,7 +289,6 @@ export default function LeadFormSection() {
     setApartment(null);
     setDownPayment(null);
     setOwnFundsAmount(null);
-    setMonthlyPayment(null);
     setLead(emptyLead);
     setDone(false);
     setError('');
@@ -369,10 +335,6 @@ export default function LeadFormSection() {
             downPaymentType: selectedDownPayment?.value || '',
             downPayment: selectedDownPayment?.label || '',
             ownFundsAmount,
-            monthlyPayment: selectedPayment?.value || '',
-            monthlyPaymentLabel: selectedPayment?.label || '',
-            budgetPreset: selectedBudget?.value || '',
-            budget: selectedBudget?.label || '',
             matchedPlans: matchedPlans.map(serializePlan),
           },
           utm: {
@@ -477,7 +439,7 @@ export default function LeadFormSection() {
                   Подберём планировки под ваши ответы
                 </h2>
                 <p className="mt-3 max-w-2xl text-[color:var(--muted)]">
-                  Ответьте на 3 вопроса — покажем персональную подборку квартир с планировками и ценами.
+                  Ответьте на 2 вопроса — покажем персональную подборку квартир с планировками и ценами.
                 </p>
               </div>
               <div className="flex flex-col gap-3 sm:flex-row lg:justify-end">
@@ -510,7 +472,7 @@ export default function LeadFormSection() {
                   </div>
                   <div className="mt-5">
                     <p className="font-semibold text-[#d7c4a5]">
-                      3 вопроса и реальные планировки
+                      2 вопроса и реальные планировки
                     </p>
                     <h3
                       id="floorplan-quiz-title"
@@ -520,7 +482,7 @@ export default function LeadFormSection() {
                     </h3>
                   </div>
 
-                  <div className="mt-5 grid gap-2 sm:grid-cols-4 lg:grid-cols-1">
+                  <div className="mt-5 grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
                     {sidebarSteps.map((item, index) => {
                       const itemMeta = stepMeta[item.key];
                       const completedOrCurrent = itemMeta.index <= currentMeta.index;
@@ -564,7 +526,7 @@ export default function LeadFormSection() {
                 <div className="mb-5">
                   <div className="mb-2 flex items-center justify-between gap-3 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--muted)]">
                     <span>
-                      Шаг {currentMeta.index} из 4 · {currentMeta.label}
+                      Шаг {currentMeta.index} из 3 · {currentMeta.label}
                     </span>
                     <span>{currentMeta.progress}%</span>
                   </div>
@@ -642,25 +604,6 @@ export default function LeadFormSection() {
                   </QuizQuestion>
                 )}
 
-                {step === 'payment' && (
-                  <QuizQuestion
-                    title="Какой ежемесячный платёж был бы комфортным?"
-                    description="По ответу определим ценовой диапазон и покажем подходящие планировки."
-                  >
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      {monthlyPaymentOptions.map((choice) => (
-                        <ChoiceButton
-                          key={choice.value}
-                          active={monthlyPayment === choice.value}
-                          title={choice.label}
-                          text={choice.hint}
-                          onClick={() => selectMonthlyPayment(choice.value)}
-                        />
-                      ))}
-                    </div>
-                  </QuizQuestion>
-                )}
-
                 {step === 'results' && (
                   <div className="min-w-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -672,9 +615,7 @@ export default function LeadFormSection() {
                           Подобрали {matchedPlans.length} {getPlanWord(matchedPlans.length)} под ваши ответы
                         </h2>
                         <p className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
-                          {selectedApartment?.label}
-                          {selectedPayment ? ` · ${selectedPayment.label}` : ''}
-                          {selectedBudget ? ` · ориентир ${selectedBudget.label}` : ''}. {getResultIntro(hasExactBudgetMatches)}
+                          {selectedApartment?.label}. {getResultIntro(hasExactRoomMatches)}
                         </p>
                       </div>
                       <Button type="button" variant="ghost" className="w-fit rounded-full !px-4 !py-2" onClick={goBack}>
@@ -805,7 +746,7 @@ export default function LeadFormSection() {
                   </div>
                 )}
 
-                {step !== 'apartment' && step !== 'results' && (
+                {step === 'downPayment' && (
                   <Button type="button" variant="ghost" className="mt-5 rounded-full !px-4 !py-2" onClick={goBack}>
                     ← Назад
                   </Button>

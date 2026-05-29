@@ -1,4 +1,4 @@
-const CACHE_NAME = 'svoydom-v3';
+const CACHE_NAME = 'svoydom-v4';
 const PRECACHE_URLS = ['/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {
