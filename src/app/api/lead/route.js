@@ -272,6 +272,29 @@ export async function OPTIONS(request) {
   return new Response(null, { status: 204, headers: corsHeaders });
 }
 
+export async function GET(request) {
+  return jsonWithCors(
+    request,
+    { ok: true },
+    {
+      status: 200,
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    }
+  );
+}
+
+export async function HEAD(request) {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      ...getCorsHeaders(request),
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
 export async function POST(request) {
   const startTime = Date.now();
   console.log('[Lead] Request received at:', new Date().toISOString());
