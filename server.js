@@ -1,4 +1,8 @@
 const http = require('http');
+
+process.env.NODE_ENV = process.env.NODE_ENV || 'production';
+process.env.NEXT_TELEMETRY_DISABLED = '1';
+
 const next = require('next');
 
 const port = Number(process.env.PORT || 3000);
